@@ -21,7 +21,10 @@ Running log of what's done, in progress, and blocked — kept up to date so Jack
 - [x] Verified clean install + boot from the new location: `server` installs, `db:push` creates tables, `/health` and `/machines` respond; `app` installs and typechecks clean
 - [x] Fixed this machine's dev environment: Node v25 had no prebuilt `better-sqlite3` binary, so `npm install` in `/server` needed Python + Visual Studio Build Tools (C++ workload) installed to compile it from source — both installed, install now goes through clean
 - [x] AI provider decided: **OpenAI**, per customer preference — unblocks the chat assistant work
+- [x] AI chat assistant wired to OpenAI (`gpt-4o-mini` by default, configurable via `OPENAI_CHAT_MODEL`): the machine passport is flattened into a system prompt for context injection, conversation history is replayed on each turn, and OpenAI failures (no key, API error) return a clean 502 instead of losing the user's message
+- [x] Fixed a reliability gap found while testing the above: any thrown/rejected route error (bad foreign key, downstream API failure) was crashing the *entire* server process, not just failing that request — added a global error handler (`express-async-errors` + error middleware in `server/src/index.ts`) so the API survives bad requests now
+- [ ] "Add this update to the record" is still a stub — it marks the chat message as added but doesn't yet extract a structured RepairLog/DriverNote from it
 
 ## Open items / blockers
 
-None currently blocking. Next up: wire `server/src/routes/chat.ts`'s TODOs (LLM call with machine-context injection, "add to record" extraction) to the OpenAI API; enforce role-based auth on routes/screens; implement PM alert rules in the hours-entries route.
+None currently blocking. Next up: the add-to-record extraction step above; enforce role-based auth on routes/screens; implement PM alert rules in the hours-entries route; a real `OPENAI_API_KEY` needs to go in `server/.env` before the chat assistant works beyond the 502 fallback.
