@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq, desc } from "drizzle-orm";
 import { db, schema } from "../db";
+import { getMachinePassport } from "../lib/machineContext";
 
 export const machinesRouter = Router();
 
@@ -13,25 +13,9 @@ machinesRouter.get("/", async (_req, res) => {
 
 // The passport — identity + full history.
 machinesRouter.get("/:id", async (req, res) => {
-  const [machine] = await db.select().from(schema.machines).where(eq(schema.machines.id, req.params.id));
-  if (!machine) return res.status(404).json({ error: "not found" });
-
-  const [repairLogsList, driverNotesList, hoursEntriesList, diagnosticEntriesList, partsList] = await Promise.all([
-    db.select().from(schema.repairLogs).where(eq(schema.repairLogs.machineId, machine.id)).orderBy(desc(schema.repairLogs.createdAt)),
-    db.select().from(schema.driverNotes).where(eq(schema.driverNotes.machineId, machine.id)).orderBy(desc(schema.driverNotes.createdAt)),
-    db.select().from(schema.hoursEntries).where(eq(schema.hoursEntries.machineId, machine.id)).orderBy(desc(schema.hoursEntries.recordedAt)),
-    db.select().from(schema.diagnosticEntries).where(eq(schema.diagnosticEntries.machineId, machine.id)).orderBy(desc(schema.diagnosticEntries.createdAt)),
-    db.select().from(schema.parts).where(eq(schema.parts.machineId, machine.id)).orderBy(desc(schema.parts.orderedAt)),
-  ]);
-
-  res.json({
-    ...machine,
-    repairLogs: repairLogsList,
-    driverNotes: driverNotesList,
-    hoursEntries: hoursEntriesList,
-    diagnosticEntries: diagnosticEntriesList,
-    parts: partsList,
-  });
+  const passport = await getMachinePassport(req.params.id);
+  if (!passport) return res.status(404).json({ error: "not found" });
+  res.json(passport);
 });
 
 const createSchema = z.object({

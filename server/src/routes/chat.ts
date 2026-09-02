@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db, schema } from "../db";
+import { getMachinePassport, machineContextToPrompt } from "../lib/machineContext";
+import { getOpenAI, CHAT_MODEL } from "../lib/openai";
 
 export const chatRouter = Router();
 
@@ -18,13 +20,44 @@ chatRouter.post("/threads/:id/messages", async (req, res) => {
   const schemaValidator = z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1) });
   const parsed = schemaValidator.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
-  // TODO: when role === "user", call the LLM provider with machine context injected
-  // and persist the assistant's reply as a second message here.
-  const [message] = await db
+
+  const [thread] = await db.select().from(schema.chatThreads).where(eq(schema.chatThreads.id, req.params.id));
+  if (!thread) return res.status(404).json({ error: "not found" });
+
+  const [userMessage] = await db
     .insert(schema.chatMessages)
-    .values({ threadId: req.params.id, role: parsed.data.role, content: parsed.data.content })
+    .values({ threadId: thread.id, role: parsed.data.role, content: parsed.data.content })
     .returning();
-  res.status(201).json(message);
+
+  if (parsed.data.role !== "user") return res.status(201).json([userMessage]);
+
+  const [passport, priorMessages] = await Promise.all([
+    getMachinePassport(thread.machineId),
+    db.select().from(schema.chatMessages).where(eq(schema.chatMessages.threadId, thread.id)).orderBy(asc(schema.chatMessages.createdAt)),
+  ]);
+  if (!passport) return res.status(201).json([userMessage]);
+
+  let reply: string;
+  try {
+    const completion = await getOpenAI().chat.completions.create({
+      model: CHAT_MODEL,
+      messages: [
+        { role: "system", content: machineContextToPrompt(passport) },
+        ...priorMessages.map((m) => ({ role: m.role, content: m.content }) as const),
+      ],
+    });
+    reply = completion.choices[0]?.message?.content?.trim() || "Sorry, I didn't get a response — try again.";
+  } catch (err) {
+    console.error("OpenAI chat completion failed:", err);
+    return res.status(502).json({ error: "chat assistant is unavailable right now", userMessage });
+  }
+
+  const [assistantMessage] = await db
+    .insert(schema.chatMessages)
+    .values({ threadId: thread.id, role: "assistant", content: reply })
+    .returning();
+
+  res.status(201).json([userMessage, assistantMessage]);
 });
 
 // "Add this update to the record" — turns a chat exchange into a real repair/diagnostic/note entry.

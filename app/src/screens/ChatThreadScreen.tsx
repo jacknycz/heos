@@ -8,8 +8,6 @@ type Props = NativeStackScreenProps<MachinesStackParamList, "ChatThread">;
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
 // Per-machine AI chat — opens already knowing this machine's context (Phase 1 scope).
-// The actual LLM call + machine-context injection is a separate build step (see PROGRESS.md);
-// this screen wires up the thread/message plumbing and the "add to record" action.
 export function ChatThreadScreen({ route }: Props) {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -27,10 +25,9 @@ export function ChatThreadScreen({ route }: Props) {
 
   async function send() {
     const id = await ensureThread();
-    const message = await apiPost<Message>(`/chat/threads/${id}/messages`, { role: "user", content: input });
-    setMessages((prev) => [...prev, message]);
+    const newMessages = await apiPost<Message[]>(`/chat/threads/${id}/messages`, { role: "user", content: input });
+    setMessages((prev) => [...prev, ...newMessages]);
     setInput("");
-    // TODO: server-side LLM call + assistant reply lands here once the provider is picked.
   }
 
   async function addToRecord(messageId: string) {

@@ -18,7 +18,10 @@ Running log of what's done, in progress, and blocked — kept up to date so Jack
 
 - [x] Moved out of a loose OneDrive folder and into this git repo, initial commit made — resolves the "where does this code live" blocker from Day 1
 - [x] README rewritten to match actual stack (Drizzle, not Prisma — Day 1 log had drifted)
+- [x] Verified clean install + boot from the new location: `server` installs, `db:push` creates tables, `/health` and `/machines` respond; `app` installs and typechecks clean
+- [x] Fixed this machine's dev environment: Node v25 had no prebuilt `better-sqlite3` binary, so `npm install` in `/server` needed Python + Visual Studio Build Tools (C++ workload) installed to compile it from source — both installed, install now goes through clean
+- [x] AI provider decided: **OpenAI**, per customer preference — unblocks the chat assistant work
 
 ## Open items / blockers
 
-- AI provider not picked yet (OpenAI vs. Anthropic vs. other) — affects the chat assistant work; doesn't block anything else.
+None currently blocking. Next up: wire `server/src/routes/chat.ts`'s TODOs (LLM call with machine-context injection, "add to record" extraction) to the OpenAI API; enforce role-based auth on routes/screens; implement PM alert rules in the hours-entries route.

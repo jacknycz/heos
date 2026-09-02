@@ -1,3 +1,4 @@
+import "express-async-errors";
 import express from "express";
 import cors from "cors";
 import { machinesRouter } from "./routes/machines";
@@ -21,6 +22,13 @@ app.use("/hours-entries", hoursEntriesRouter);
 app.use("/diagnostics", diagnosticsRouter);
 app.use("/parts", partsRouter);
 app.use("/chat", chatRouter);
+
+// Catches errors from any route (including async ones, via express-async-errors) so a bad
+// request returns a 500 instead of crashing the whole server for every other user.
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: "internal server error" });
+});
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(port, () => console.log(`HEOS server listening on :${port}`));
