@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "HEOS",
+    "slug": "heos",
+    "scheme": "heos",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": { "supportsTablet": false },
+    "android": {}
+  }
+}

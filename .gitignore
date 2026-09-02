@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.log
+
+# server
+server/dev.db
+server/dev.db-shm
+server/dev.db-wal
+server/.env
+
+# app
+app/.expo/
+app/npm-debug.*
+app/*.jks
+app/*.p8
+app/*.p12
+app/*.key
+app/*.mobileprovision
