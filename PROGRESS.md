@@ -25,6 +25,29 @@ Running log of what's done, in progress, and blocked — kept up to date so Jack
 - [x] Fixed a reliability gap found while testing the above: any thrown/rejected route error (bad foreign key, downstream API failure) was crashing the *entire* server process, not just failing that request — added a global error handler (`express-async-errors` + error middleware in `server/src/index.ts`) so the API survives bad requests now
 - [ ] "Add this update to the record" is still a stub — it marks the chat message as added but doesn't yet extract a structured RepairLog/DriverNote from it
 
+## 2026-09-03 — Multi-organization + real auth
+
+Reworked the data model from the ground up for multi-tenancy: HEOS now supports multiple
+organizations, each with multiple users, each organization has at least one ADMIN, and an ADMIN
+can change any other user's role (including another admin's) within their own organization.
+
+- [x] New `organizations` and `org_invites` tables; `users` and `machines` now carry `organizationId` — every fleet record is scoped to one tenant
+- [x] Role enum extended to `ADMIN | MANAGER | MECHANIC | DRIVER`
+- [x] Real auth: email+password (bcryptjs, no native build step) + JWT bearer tokens. `POST /auth/signup-organization` bootstraps a new org with its first admin; `POST /auth/login` signs in
+- [x] Invite-code flow: an admin mints a single-use code via `POST /users/invites` (role preset, 7-day expiry), shares it manually (no email delivery), and the invitee redeems it via `POST /auth/accept-invite`
+- [x] `PATCH /users/:id/role` (admin-only) changes any teammate's role; blocked if it would leave the organization with zero admins
+- [x] Every fleet route now requires auth and is scoped to the caller's organization — verified two separate orgs can't see or write each other's machines/threads/messages even by guessing IDs
+- [x] App: Login/Create-Organization/Accept-Invite screens, a Team screen (Settings → Manage Team) for admins to invite teammates and change roles, and a persisted session (AsyncStorage) so the app reopens signed in
+- [x] Found and fixed a bug while testing: the JWT originally carried the user's role from login time, so a role change didn't take effect until the affected user logged out and back in — `requireAuth` now looks up the live role from the DB on every request instead
+
+**Breaking change for local dev:** the schema changed (new tables, new required columns). Delete
+`server/dev.db` (and its `-shm`/`-wal` siblings) and re-run `npm run db:push` — this migration
+tool doesn't ALTER existing tables, see the comment in `server/src/db/migrate.ts`.
+
 ## Open items / blockers
 
-None currently blocking. Next up: the add-to-record extraction step above; enforce role-based auth on routes/screens; implement PM alert rules in the hours-entries route; a real `OPENAI_API_KEY` needs to go in `server/.env` before the chat assistant works beyond the 502 fallback.
+None currently blocking. Next up: the add-to-record extraction step above; implement PM alert
+rules in the hours-entries route; a real `OPENAI_API_KEY` needs to go in `server/.env` before the
+chat assistant works beyond the 502 fallback. Worth hardening later (not needed for Phase 1):
+move the JWT off AsyncStorage onto `expo-secure-store` for native builds (AsyncStorage isn't
+encrypted at rest; used for now since SecureStore doesn't support the web preview target).

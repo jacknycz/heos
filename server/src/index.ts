@@ -1,6 +1,9 @@
+import "dotenv/config";
 import "express-async-errors";
 import express from "express";
 import cors from "cors";
+import { authRouter } from "./routes/auth";
+import { usersRouter } from "./routes/users";
 import { machinesRouter } from "./routes/machines";
 import { repairLogsRouter } from "./routes/repairLogs";
 import { driverNotesRouter } from "./routes/driverNotes";
@@ -15,6 +18,8 @@ app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
+app.use("/auth", authRouter);
+app.use("/users", usersRouter);
 app.use("/machines", machinesRouter);
 app.use("/repair-logs", repairLogsRouter);
 app.use("/driver-notes", driverNotesRouter);

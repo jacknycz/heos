@@ -20,6 +20,10 @@ ships and is accepted.
 
 ## Phase 1 scope
 
+Multi-organization from the ground up: an organization has multiple users, always has at least one
+admin, and an admin controls every other user's role (including other admins) within their own
+organization — see [PROGRESS.md](PROGRESS.md) for how that's modeled and enforced.
+
 Digital passport per machine (identity + full repair/maintenance/order history), repair &
 maintenance logging, driver notes/issue reporting (typed only), manual hours & distance entry,
 diagnostics via guided checklists (not free text/fault codes), parts & cost log with repeat-order
@@ -40,10 +44,12 @@ record" turns a chat exchange into a real log entry).
 ```
 cd server
 npm install
+cp .env.example .env   # then set JWT_SECRET (and OPENAI_API_KEY if testing chat)
 npm run db:push
 npm run dev
 ```
-Runs on `:4000` by default (see `.env.example`).
+Runs on `:4000` by default. First use: `POST /auth/signup-organization` to create an organization
+and its first admin, or open the app and use "Create a new organization" from the login screen.
 
 ### App
 ```

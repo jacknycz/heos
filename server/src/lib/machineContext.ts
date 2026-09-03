@@ -1,9 +1,22 @@
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { db, schema } from "../db";
 
+// Confirms machineId belongs to organizationId before any child record can reference it —
+// the boundary that keeps one organization's fleet data from leaking into another's.
+export async function assertMachineInOrg(machineId: string, organizationId: string) {
+  const [machine] = await db
+    .select({ id: schema.machines.id })
+    .from(schema.machines)
+    .where(and(eq(schema.machines.id, machineId), eq(schema.machines.organizationId, organizationId)));
+  return !!machine;
+}
+
 // The passport read used by both the passport screen and the chat assistant's context injection.
-export async function getMachinePassport(machineId: string) {
-  const [machine] = await db.select().from(schema.machines).where(eq(schema.machines.id, machineId));
+export async function getMachinePassport(machineId: string, organizationId: string) {
+  const [machine] = await db
+    .select()
+    .from(schema.machines)
+    .where(and(eq(schema.machines.id, machineId), eq(schema.machines.organizationId, organizationId)));
   if (!machine) return null;
 
   const [repairLogs, driverNotes, hoursEntries, diagnosticEntries, parts] = await Promise.all([

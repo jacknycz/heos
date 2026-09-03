@@ -2,17 +2,25 @@ import { Router } from "express";
 import { z } from "zod";
 import { asc, eq } from "drizzle-orm";
 import { db, schema } from "../db";
-import { getMachinePassport, machineContextToPrompt } from "../lib/machineContext";
+import { getMachinePassport, machineContextToPrompt, assertMachineInOrg } from "../lib/machineContext";
 import { getOpenAI, CHAT_MODEL } from "../lib/openai";
+import { requireAuth } from "../lib/auth";
 
 export const chatRouter = Router();
+chatRouter.use(requireAuth);
 
 // Opens a chat thread already primed with the machine's passport context — no manual re-entry.
 chatRouter.post("/threads", async (req, res) => {
-  const schemaValidator = z.object({ machineId: z.string(), userId: z.string() });
+  const schemaValidator = z.object({ machineId: z.string() });
   const parsed = schemaValidator.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
-  const [thread] = await db.insert(schema.chatThreads).values(parsed.data).returning();
+  if (!(await assertMachineInOrg(parsed.data.machineId, req.user!.organizationId))) {
+    return res.status(404).json({ error: "machine not found" });
+  }
+  const [thread] = await db
+    .insert(schema.chatThreads)
+    .values({ machineId: parsed.data.machineId, userId: req.user!.id })
+    .returning();
   res.status(201).json(thread);
 });
 
@@ -22,7 +30,9 @@ chatRouter.post("/threads/:id/messages", async (req, res) => {
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 
   const [thread] = await db.select().from(schema.chatThreads).where(eq(schema.chatThreads.id, req.params.id));
-  if (!thread) return res.status(404).json({ error: "not found" });
+  if (!thread || !(await assertMachineInOrg(thread.machineId, req.user!.organizationId))) {
+    return res.status(404).json({ error: "not found" });
+  }
 
   const [userMessage] = await db
     .insert(schema.chatMessages)
@@ -32,7 +42,7 @@ chatRouter.post("/threads/:id/messages", async (req, res) => {
   if (parsed.data.role !== "user") return res.status(201).json([userMessage]);
 
   const [passport, priorMessages] = await Promise.all([
-    getMachinePassport(thread.machineId),
+    getMachinePassport(thread.machineId, req.user!.organizationId),
     db.select().from(schema.chatMessages).where(eq(schema.chatMessages.threadId, thread.id)).orderBy(asc(schema.chatMessages.createdAt)),
   ]);
   if (!passport) return res.status(201).json([userMessage]);
@@ -62,12 +72,20 @@ chatRouter.post("/threads/:id/messages", async (req, res) => {
 
 // "Add this update to the record" — turns a chat exchange into a real repair/diagnostic/note entry.
 chatRouter.post("/messages/:id/add-to-record", async (req, res) => {
+  const [row] = await db
+    .select({ message: schema.chatMessages, machineId: schema.chatThreads.machineId })
+    .from(schema.chatMessages)
+    .innerJoin(schema.chatThreads, eq(schema.chatThreads.id, schema.chatMessages.threadId))
+    .where(eq(schema.chatMessages.id, req.params.id));
+  if (!row || !(await assertMachineInOrg(row.machineId, req.user!.organizationId))) {
+    return res.status(404).json({ error: "not found" });
+  }
+
   const [message] = await db
     .update(schema.chatMessages)
     .set({ addedToRecord: true })
     .where(eq(schema.chatMessages.id, req.params.id))
     .returning();
-  if (!message) return res.status(404).json({ error: "not found" });
   // TODO: extraction step — turn message.content into a draft RepairLog/DriverNote for review before saving.
   res.json(message);
 });

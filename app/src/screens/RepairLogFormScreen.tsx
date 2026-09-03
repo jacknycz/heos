@@ -12,10 +12,8 @@ export function RepairLogFormScreen({ route, navigation }: Props) {
   const [cost, setCost] = useState("");
 
   async function submit() {
-    // TODO: replace hardcoded mechanicId with the logged-in user once auth is wired up.
     await apiPost("/repair-logs", {
       machineId,
-      mechanicId: "TODO-current-user-id",
       description,
       costCents: Math.round(parseFloat(cost || "0") * 100),
     });

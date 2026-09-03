@@ -15,10 +15,7 @@ export function ChatThreadScreen({ route }: Props) {
 
   async function ensureThread() {
     if (threadId) return threadId;
-    const thread = await apiPost<{ id: string }>("/chat/threads", {
-      machineId: route.params.machineId,
-      userId: "TODO-current-user-id",
-    });
+    const thread = await apiPost<{ id: string }>("/chat/threads", { machineId: route.params.machineId });
     setThreadId(thread.id);
     return thread.id;
   }

@@ -7,17 +7,42 @@ const id = () => text("id").primaryKey().$defaultFn(() => createId());
 const timestampCol = (sqlName: string) => integer(sqlName, { mode: "timestamp" }).notNull().$defaultFn(() => new Date());
 const createdAt = () => timestampCol("created_at");
 
-export const users = sqliteTable("users", {
+// The tenant boundary — every fleet's machines and users hang off one organization.
+export const organizations = sqliteTable("organizations", {
   id: id(),
   name: text("name").notNull(),
+  createdAt: createdAt(),
+});
+
+export const users = sqliteTable("users", {
+  id: id(),
+  organizationId: text("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  role: text("role", { enum: ["MANAGER", "MECHANIC", "DRIVER"] }).notNull(),
+  passwordHash: text("password_hash").notNull(),
+  // ADMIN controls every other user's role (including other admins) within their organization.
+  role: text("role", { enum: ["ADMIN", "MANAGER", "MECHANIC", "DRIVER"] }).notNull(),
+  createdAt: createdAt(),
+});
+
+// A one-time code an admin hands out so a new teammate can join their organization
+// with a preset role, without needing email delivery or deep links.
+export const orgInvites = sqliteTable("org_invites", {
+  id: id(),
+  organizationId: text("organization_id").notNull().references(() => organizations.id),
+  code: text("code").notNull().unique(),
+  role: text("role", { enum: ["ADMIN", "MANAGER", "MECHANIC", "DRIVER"] }).notNull(),
+  createdByUserId: text("created_by_user_id").notNull().references(() => users.id),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  usedAt: integer("used_at", { mode: "timestamp" }),
+  usedByUserId: text("used_by_user_id").references(() => users.id),
   createdAt: createdAt(),
 });
 
 // The digital passport: one row per machine, everything else hangs off it.
 export const machines = sqliteTable("machines", {
   id: id(),
+  organizationId: text("organization_id").notNull().references(() => organizations.id),
   name: text("name").notNull(), // e.g. "Loader 4" — whatever the fleet calls it
   make: text("make"),
   model: text("model"),

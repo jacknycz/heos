@@ -14,7 +14,6 @@ export function HoursEntryFormScreen({ route, navigation }: Props) {
   async function submit() {
     await apiPost("/hours-entries", {
       machineId,
-      enteredById: "TODO-current-user-id",
       hours: hours ? parseFloat(hours) : undefined,
       distance: distance ? parseFloat(distance) : undefined,
     });

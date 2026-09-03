@@ -1,20 +1,43 @@
 // Minimal "push" migration for local dev: creates tables if they don't exist yet.
 // Good enough for Phase 1 solo-dev speed — move to drizzle-kit generate/migrate once schema churn slows down.
+// Note: this doesn't ALTER existing tables. If you're updating an existing dev.db after a schema
+// change, delete it (and its -shm/-wal siblings) and re-run this rather than expecting a migration.
 import Database from "better-sqlite3";
 
 const sqlite = new Database(process.env.DATABASE_URL?.replace("file:", "") ?? "./dev.db");
 
 sqlite.exec(`
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS organizations (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES organizations(id),
+  name TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
   role TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS org_invites (
+  id TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES organizations(id),
+  code TEXT NOT NULL UNIQUE,
+  role TEXT NOT NULL,
+  created_by_user_id TEXT NOT NULL REFERENCES users(id),
+  expires_at INTEGER NOT NULL,
+  used_at INTEGER,
+  used_by_user_id TEXT REFERENCES users(id),
   created_at INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS machines (
   id TEXT PRIMARY KEY,
+  organization_id TEXT NOT NULL REFERENCES organizations(id),
   name TEXT NOT NULL,
   make TEXT,
   model TEXT,

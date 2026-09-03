@@ -11,8 +11,7 @@ export function DriverNoteFormScreen({ route, navigation }: Props) {
   const [text, setText] = useState("");
 
   async function submit() {
-    // TODO: replace hardcoded driverId with the logged-in user once auth is wired up.
-    await apiPost("/driver-notes", { machineId, driverId: "TODO-current-user-id", text });
+    await apiPost("/driver-notes", { machineId, text });
     navigation.goBack();
   }
 
