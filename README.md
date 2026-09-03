@@ -22,11 +22,22 @@ ships and is accepted.
 
 Railway, for both environments: one project with a `staging` and a `production` environment, each
 with its own Postgres. Rationale and the staging→production data-promotion plan are in
-[PROGRESS.md](PROGRESS.md) (2026-09-03 entry). Deploying: point a Railway service at this repo with
-root directory `server`, add a Postgres plugin to the same environment (Railway injects
-`DATABASE_URL` automatically), set the other vars from `.env.example` (`JWT_SECRET`,
+[PROGRESS.md](PROGRESS.md) (2026-09-03 entry). Deploying the **API**: point a Railway service at
+this repo with root directory `server`, add a Postgres plugin to the same environment (Railway
+injects `DATABASE_URL` automatically), set the other vars from `.env.example` (`JWT_SECRET`,
 `OPENAI_API_KEY`, etc.) in Railway's dashboard, and run `npm run db:migrate` once (Railway's shell,
-or as a pre-deploy step) to create the schema.
+or as a pre-deploy step) to create the schema. Visiting the API's URL directly in a browser will
+show `Cannot GET /` — that's expected, it's a JSON API with no root route; check `/health` instead.
+
+**Deploying the app as a staging web preview:** the app is mobile-first (Phase 1 scope), but Expo
+can also export it as a static website — useful for checking on it from anywhere without running a
+dev server. Add a second Railway service, root directory `app`, build command `npm run build:web`,
+start command `npm run start:web`. Set `EXPO_PUBLIC_API_URL` as a **build-time** variable pointing
+at the API service's public Railway URL — Expo's public env vars get baked into the JS bundle at
+build time, not read at runtime, so changing the API URL later means rebuilding/redeploying this
+service, not just editing a variable. This is a preview convenience, not the real product — actual
+distribution is via Expo Go (dev) or an EAS build submitted to TestFlight/Play (production), neither
+of which is set up yet.
 
 ## Phase 1 scope
 

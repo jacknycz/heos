@@ -108,13 +108,34 @@ to `app/.npmrc`, and pinning `nativewind@4.1.23` (the last release built for Rea
       navigated machine list → passport → chat → back, and triggered a real form validation error,
       all via a real browser driving the Expo web build. Zero console errors.
 
+## 2026-09-03 — Railway API live; added a static web staging preview
+
+Jack got the Railway project running. Hit the expected first-boot error (`DATABASE_URL` not set —
+no Postgres attached yet) and, after that, `Cannot GET /` when checking the API in a browser —
+both expected: the former needed a Postgres plugin attached, the latter is just Express's normal
+404 for `GET /` on a JSON API that only defines `/health` and the resource routes, not a bug.
+
+Then: "I want a staging site I can look at while I'm not at home." The app is mobile-first, but
+there was no way to check on it except running a local dev server on the same network. Added a
+static web export path:
+
+- [x] `npm run build:web` (`expo export --platform web`) produces a static `dist/` bundle;
+      `npm run start:web` (`serve dist -s -l $PORT`) serves it — added `serve` as a dependency
+- [x] Verified the full pipeline locally end-to-end (not just the build step): built the static
+      export, served it exactly as Railway would, and drove it with a real browser — login,
+      real API call, navigation to the machine list, zero console errors
+- [ ] Not yet deployed to Railway as a second service — see README's Hosting section for the exact
+      setup (root directory `app`, build/start commands above, `EXPO_PUBLIC_API_URL` set as a
+      **build-time** variable since Expo bakes public env vars into the bundle, not read at runtime)
+
+This is a preview convenience only, not the real distribution story — actual users get the app via
+Expo Go (dev) or an EAS build submitted to TestFlight/Play, neither set up yet.
+
 ## Open items / blockers
 
 None currently blocking. Next up on the product side: the add-to-record extraction step from the
-chat entry above; PM alert rules in the hours-entries route. Next up on hosting: Jack creates the
-actual Railway project (staging + production environments, Postgres attached to each), sets env
-vars from `server/.env.example`, and runs `npm run db:migrate` once per environment. A real
-`OPENAI_API_KEY` needs to go in each environment's vars before the chat assistant works beyond the
-502 fallback. Worth hardening later (not needed for Phase 1): move the JWT off AsyncStorage onto
-`expo-secure-store` for native builds (AsyncStorage isn't encrypted at rest; used for now since
-SecureStore doesn't support the web preview target).
+chat entry above; PM alert rules in the hours-entries route. Next up on hosting: deploy the static
+web preview service above; a real `OPENAI_API_KEY` needs to go in each environment's vars before
+the chat assistant works beyond the 502 fallback. Worth hardening later (not needed for Phase 1):
+move the JWT off AsyncStorage onto `expo-secure-store` for native builds (AsyncStorage isn't
+encrypted at rest; used for now since SecureStore doesn't support the web preview target).
