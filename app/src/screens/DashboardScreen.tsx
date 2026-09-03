@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { FlatList, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
 import { apiGet } from "../api/client";
+import { Screen, Text, EmptyState } from "../ui";
 
 // Mobile manager dashboard — fleet status + repeat-order flags (Phase 1). Web version is Phase 3.
 export function DashboardScreen() {
@@ -11,19 +12,18 @@ export function DashboardScreen() {
   }, []);
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>Manager Dashboard</Text>
-      <Text style={{ fontWeight: "600" }}>Repeat orders flagged</Text>
+    <Screen edges={["top", "bottom"]}>
+      <Text variant="title">Manager Dashboard</Text>
+      <Text variant="heading">Repeat orders flagged</Text>
       <FlatList
         data={repeatOrders}
         keyExtractor={(r) => r.partNumber}
-        ListEmptyComponent={<Text style={{ color: "#666" }}>None yet.</Text>}
+        ItemSeparatorComponent={() => <View className="h-px bg-neutral-200" />}
+        ListEmptyComponent={<EmptyState title="None yet" />}
         renderItem={({ item }) => (
-          <Text>
-            • {item.partNumber} ordered {item.count}× across the fleet
-          </Text>
+          <Text className="py-2">• {item.partNumber} ordered {item.count}× across the fleet</Text>
         )}
       />
-    </View>
+    </Screen>
   );
 }

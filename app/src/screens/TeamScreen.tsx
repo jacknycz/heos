@@ -1,12 +1,19 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { Button, FlatList, Text, View } from "react-native";
+import { FlatList, View } from "react-native";
 import { apiGet, apiPatch, apiPost } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import type { Role } from "../auth/AuthContext";
+import { Screen, Text, Button, Badge, Card } from "../ui";
 
 type Member = { id: string; name: string; email: string; role: Role };
 const ROLES: Role[] = ["ADMIN", "MANAGER", "MECHANIC", "DRIVER"];
+const ROLE_TONE: Record<Role, "primary" | "success" | "warning" | "neutral"> = {
+  ADMIN: "primary",
+  MANAGER: "success",
+  MECHANIC: "warning",
+  DRIVER: "neutral",
+};
 
 // Admin-only: view teammates, change anyone's role (including another admin's), and mint invite codes.
 export function TeamScreen() {
@@ -43,43 +50,53 @@ export function TeamScreen() {
 
   if (user?.role !== "ADMIN") {
     return (
-      <View style={{ flex: 1, padding: 16 }}>
+      <Screen edges={["bottom"]}>
         <Text>Only an organization admin can manage the team.</Text>
-      </View>
+      </Screen>
     );
   }
 
   return (
-    <FlatList
-      contentContainerStyle={{ padding: 16, gap: 16 }}
-      data={members}
-      keyExtractor={(m) => m.id}
-      ListHeaderComponent={
-        <View style={{ gap: 12, marginBottom: 8 }}>
-          <Text style={{ fontSize: 20, fontWeight: "700" }}>Team</Text>
-          {error ? <Text style={{ color: "crimson" }}>{error}</Text> : null}
-          <Text style={{ fontWeight: "600" }}>Invite a teammate</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {ROLES.map((r) => (
-              <Button key={r} title={`Invite ${r}`} onPress={() => createInvite(r)} />
-            ))}
+    <Screen edges={["bottom"]} padded={false}>
+      <FlatList
+        contentContainerClassName="gap-3 p-4"
+        data={members}
+        keyExtractor={(m) => m.id}
+        ListHeaderComponent={
+          <View className="mb-2 gap-3">
+            <Text variant="title">Team</Text>
+            {error ? <Text className="text-danger-600">{error}</Text> : null}
+            <Text variant="heading">Invite a teammate</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {ROLES.map((r) => (
+                <Button key={r} size="sm" variant="secondary" title={`Invite ${r}`} onPress={() => createInvite(r)} />
+              ))}
+            </View>
+            {inviteCode ? (
+              <Card>
+                <Text selectable variant="body">
+                  Share this code: <Text className="font-semibold">{inviteCode}</Text> (expires in 7 days, single use)
+                </Text>
+              </Card>
+            ) : null}
+            <Text variant="heading" className="mt-2">Members</Text>
           </View>
-          {inviteCode ? <Text selectable>Share this code: {inviteCode} (expires in 7 days, single use)</Text> : null}
-          <Text style={{ fontWeight: "600", marginTop: 8 }}>Members</Text>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <View style={{ paddingVertical: 8, borderBottomWidth: 1, borderColor: "#eee", gap: 6 }}>
-          <Text style={{ fontWeight: "600" }}>{item.name}{item.id === user.id ? " (you)" : ""}</Text>
-          <Text style={{ color: "#666" }}>{item.email}</Text>
-          <Text>Role: {item.role}</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {ROLES.filter((r) => r !== item.role).map((r) => (
-              <Button key={r} title={`Make ${r}`} onPress={() => changeRole(item.id, r)} />
-            ))}
-          </View>
-        </View>
-      )}
-    />
+        }
+        renderItem={({ item }) => (
+          <Card className="gap-2">
+            <View className="flex-row items-center gap-2">
+              <Text variant="heading">{item.name}{item.id === user.id ? " (you)" : ""}</Text>
+              <Badge label={item.role} tone={ROLE_TONE[item.role]} />
+            </View>
+            <Text variant="muted">{item.email}</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {ROLES.filter((r) => r !== item.role).map((r) => (
+                <Button key={r} size="sm" variant="outline" title={`Make ${r}`} onPress={() => changeRole(item.id, r)} />
+              ))}
+            </View>
+          </Card>
+        )}
+      />
+    </Screen>
   );
 }

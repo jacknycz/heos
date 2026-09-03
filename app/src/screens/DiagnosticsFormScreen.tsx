@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Button, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { MachinesStackParamList } from "../navigation/MachinesStack";
 import { apiPost } from "../api/client";
+import { Screen, Text, Button } from "../ui";
 
 type Props = NativeStackScreenProps<MachinesStackParamList, "DiagnosticsForm">;
 
@@ -10,17 +10,23 @@ type Props = NativeStackScreenProps<MachinesStackParamList, "DiagnosticsForm">;
 // we know which machine types/checklists the fleet actually needs first.
 export function DiagnosticsFormScreen({ route, navigation }: Props) {
   const { machineId } = route.params;
-  const [answers, setAnswers] = useState<Record<string, boolean>>({ "Engine starts cleanly": true });
+  const [answers] = useState<Record<string, boolean>>({ "Engine starts cleanly": true });
+  const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
-    await apiPost("/diagnostics", { machineId, checklistName: "General Checklist", answers });
-    navigation.goBack();
+    setSubmitting(true);
+    try {
+      await apiPost("/diagnostics", { machineId, checklistName: "General Checklist", answers });
+      navigation.goBack();
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
-    <View style={{ padding: 16, gap: 12 }}>
-      <Text>Guided checklist (placeholder — real steps TBD)</Text>
-      <Button title="Complete Checklist" onPress={submit} />
-    </View>
+    <Screen edges={["bottom"]}>
+      <Text variant="muted">Guided checklist (placeholder — real steps TBD)</Text>
+      <Button title="Complete Checklist" onPress={submit} loading={submitting} />
+    </Screen>
   );
 }

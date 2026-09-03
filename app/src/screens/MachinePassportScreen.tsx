@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Button, ScrollView, Text, View } from "react-native";
+import { View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { MachinesStackParamList } from "../navigation/MachinesStack";
 import { apiGet } from "../api/client";
+import { Screen, Text, Button, Card } from "../ui";
 
 type Props = NativeStackScreenProps<MachinesStackParamList, "MachinePassport">;
 
@@ -18,34 +19,50 @@ export function MachinePassportScreen({ route, navigation }: Props) {
   }, [machineId]);
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
-      <Text style={{ fontSize: 20, fontWeight: "700" }}>{passport?.name ?? "Loading…"}</Text>
-      <Text style={{ color: "#666" }}>
-        {[passport?.make, passport?.model, passport?.year].filter(Boolean).join(" ")}
-      </Text>
-
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginVertical: 8 }}>
-        <Button title="Log Repair" onPress={() => navigation.navigate("RepairLogForm", { machineId })} />
-        <Button title="Driver Note" onPress={() => navigation.navigate("DriverNoteForm", { machineId })} />
-        <Button title="Hours/Distance" onPress={() => navigation.navigate("HoursEntryForm", { machineId })} />
-        <Button title="Diagnostics" onPress={() => navigation.navigate("DiagnosticsForm", { machineId })} />
-        <Button title="Chat" onPress={() => navigation.navigate("ChatThread", { machineId })} />
+    <Screen scroll edges={["bottom"]}>
+      <View>
+        <Text variant="title">{passport?.name ?? "Loading…"}</Text>
+        <Text variant="muted">{[passport?.make, passport?.model, passport?.year].filter(Boolean).join(" ")}</Text>
       </View>
 
-      <Text style={{ fontWeight: "600", marginTop: 8 }}>Repair history ({passport?.repairLogs?.length ?? 0})</Text>
-      {passport?.repairLogs?.map((r: any) => (
-        <Text key={r.id}>• {r.description} — ${(r.costCents / 100).toFixed(2)}</Text>
-      ))}
+      <View className="flex-row flex-wrap gap-2">
+        <Button size="sm" title="Log Repair" onPress={() => navigation.navigate("RepairLogForm", { machineId })} />
+        <Button size="sm" title="Driver Note" onPress={() => navigation.navigate("DriverNoteForm", { machineId })} />
+        <Button size="sm" title="Hours/Distance" onPress={() => navigation.navigate("HoursEntryForm", { machineId })} />
+        <Button size="sm" title="Diagnostics" onPress={() => navigation.navigate("DiagnosticsForm", { machineId })} />
+        <Button size="sm" title="Chat" variant="secondary" onPress={() => navigation.navigate("ChatThread", { machineId })} />
+      </View>
 
-      <Text style={{ fontWeight: "600", marginTop: 8 }}>Driver notes ({passport?.driverNotes?.length ?? 0})</Text>
-      {passport?.driverNotes?.map((n: any) => (
-        <Text key={n.id}>• {n.text}</Text>
-      ))}
+      <Card className="gap-2">
+        <Text variant="heading">Repair history ({passport?.repairLogs?.length ?? 0})</Text>
+        {passport?.repairLogs?.length ? (
+          passport.repairLogs.map((r: any) => (
+            <Text key={r.id} variant="body">• {r.description} — ${(r.costCents / 100).toFixed(2)}</Text>
+          ))
+        ) : (
+          <Text variant="muted">Nothing logged yet.</Text>
+        )}
+      </Card>
 
-      <Text style={{ fontWeight: "600", marginTop: 8 }}>Parts & cost ({passport?.parts?.length ?? 0})</Text>
-      {passport?.parts?.map((p: any) => (
-        <Text key={p.id}>• {p.partNumber} — ${(p.costCents / 100).toFixed(2)}</Text>
-      ))}
-    </ScrollView>
+      <Card className="gap-2">
+        <Text variant="heading">Driver notes ({passport?.driverNotes?.length ?? 0})</Text>
+        {passport?.driverNotes?.length ? (
+          passport.driverNotes.map((n: any) => <Text key={n.id} variant="body">• {n.text}</Text>)
+        ) : (
+          <Text variant="muted">Nothing logged yet.</Text>
+        )}
+      </Card>
+
+      <Card className="gap-2">
+        <Text variant="heading">Parts & cost ({passport?.parts?.length ?? 0})</Text>
+        {passport?.parts?.length ? (
+          passport.parts.map((p: any) => (
+            <Text key={p.id} variant="body">• {p.partNumber} — ${(p.costCents / 100).toFixed(2)}</Text>
+          ))
+        ) : (
+          <Text variant="muted">Nothing logged yet.</Text>
+        )}
+      </Card>
+    </Screen>
   );
 }

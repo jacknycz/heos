@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { MachinesStackParamList } from "../navigation/MachinesStack";
 import { apiGet } from "../api/client";
+import { Screen, Text, EmptyState } from "../ui";
 
 type Props = NativeStackScreenProps<MachinesStackParamList, "MachineList">;
 type Machine = { id: string; name: string; make?: string; model?: string };
@@ -15,21 +16,24 @@ export function MachineListScreen({ navigation }: Props) {
   }, []);
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
+    <Screen edges={["bottom"]}>
       <FlatList
         data={machines}
         keyExtractor={(m) => m.id}
-        ListEmptyComponent={<Text>No machines yet — add one from the server, or wire up a create-machine form here.</Text>}
+        ItemSeparatorComponent={() => <View className="h-px bg-neutral-200" />}
+        ListEmptyComponent={
+          <EmptyState title="No machines yet" subtitle="Add one from the server, or wire up a create-machine form here." />
+        }
         renderItem={({ item }) => (
           <Pressable
-            style={{ padding: 16, borderBottomWidth: 1, borderColor: "#eee" }}
+            className="py-4 active:opacity-60"
             onPress={() => navigation.navigate("MachinePassport", { machineId: item.id })}
           >
-            <Text style={{ fontSize: 16, fontWeight: "600" }}>{item.name}</Text>
-            <Text style={{ color: "#666" }}>{[item.make, item.model].filter(Boolean).join(" ")}</Text>
+            <Text variant="heading">{item.name}</Text>
+            <Text variant="muted">{[item.make, item.model].filter(Boolean).join(" ")}</Text>
           </Pressable>
         )}
       />
-    </View>
+    </Screen>
   );
 }

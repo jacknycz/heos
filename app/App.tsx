@@ -1,3 +1,4 @@
+import "./global.css";
 import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, View } from "react-native";
@@ -9,8 +10,8 @@ function Gate() {
   const { user, loading } = useAuth();
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator />
+      <View className="flex-1 items-center justify-center bg-neutral-50">
+        <ActivityIndicator color="#2563eb" />
       </View>
     );
   }

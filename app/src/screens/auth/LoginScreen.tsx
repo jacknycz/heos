@@ -1,54 +1,44 @@
-import { useState } from "react";
-import { Button, Text, TextInput, View } from "react-native";
+import { View } from "react-native";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { AuthStackParamList } from "../../navigation/AuthStack";
 import { useAuth } from "../../auth/AuthContext";
+import { loginSchema, type LoginFormValues } from "../../schemas/auth";
+import { Screen, Text, FormField, Button } from "../../ui";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
 export function LoginScreen({ navigation }: Props) {
   const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const { control, handleSubmit, formState, setError } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-  async function submit() {
-    setError(null);
-    setSubmitting(true);
+  async function onSubmit(values: LoginFormValues) {
     try {
-      await login(email, password);
+      await login(values.email, values.password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setSubmitting(false);
+      setError("root", { message: err instanceof Error ? err.message : "Login failed" });
     }
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, justifyContent: "center", gap: 12 }}>
-      <Text style={{ fontSize: 24, fontWeight: "700", marginBottom: 8 }}>HEOS</Text>
-      {error ? <Text style={{ color: "crimson" }}>{error}</Text> : null}
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={{ borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 6 }}
+    <Screen className="justify-center">
+      <Text variant="title" className="mb-2">HEOS</Text>
+      {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
+      <FormField control={control} name="email" label="Email" autoCapitalize="none" keyboardType="email-address" />
+      <FormField control={control} name="password" label="Password" secureTextEntry />
+      <Button
+        title="Log in"
+        onPress={handleSubmit(onSubmit)}
+        loading={formState.isSubmitting}
       />
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        secureTextEntry
-        style={{ borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 6 }}
-      />
-      <Button title={submitting ? "Logging in…" : "Log in"} onPress={submit} disabled={submitting} />
-      <View style={{ marginTop: 16, gap: 8 }}>
-        <Button title="Create a new organization" onPress={() => navigation.navigate("CreateOrganization")} />
-        <Button title="I have an invite code" onPress={() => navigation.navigate("AcceptInvite")} />
+      <View className="mt-4 gap-2">
+        <Button title="Create a new organization" variant="secondary" onPress={() => navigation.navigate("CreateOrganization")} />
+        <Button title="I have an invite code" variant="secondary" onPress={() => navigation.navigate("AcceptInvite")} />
       </View>
-    </View>
+    </Screen>
   );
 }
