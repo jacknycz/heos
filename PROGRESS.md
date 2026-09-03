@@ -78,6 +78,36 @@ database. Both are fixed now:
       2026-09-03 multi-org entry above still passes end-to-end on Postgres
 - [x] Pushed to `origin` (`github.com/jacknycz/heos`) so Railway can deploy straight from the repo
 
+## 2026-09-03 — Design system: NativeWind + a real component kit
+
+The app had no UI foundation — raw RN primitives (`View`/`Text`/`Button`), inline `style={{}}`
+objects per screen, no theme, no reusable components, hand-rolled form state with no validation
+feedback. Fine for proving data flows in Phase 1, not something to keep building a large app on.
+
+- [x] NativeWind (Tailwind for RN) with semantic color tokens aliased onto Tailwind's own scales
+      (`primary`/`danger`/`success`/`warning`/`neutral` → `colors.blue`/`red`/`green`/`amber`/`slate`
+      in `app/tailwind.config.js`) — swap the alias, not the components, to rebrand later
+- [x] Internal component kit in `app/src/ui/`: `Text` (5 typography variants), `Button` (5 variants
+      × 2 sizes, loading state), `FormField` (react-hook-form-integrated input with inline error),
+      `Card`, `Screen` (safe-area + consistent padding), `EmptyState`, `Badge` (role/status pills)
+- [x] Forms switched from hand-rolled `useState` per field to `react-hook-form` + `zod` schemas
+      (`app/src/schemas/`) — real inline validation now (a red border + message under the specific
+      invalid field), not a single generic error string at the top
+- [x] Every existing screen retrofitted onto the kit: both auth flows, machine list/passport,
+      dashboard, settings, team management, all four logging forms, chat
+
+Getting NativeWind working on Expo SDK 51 / RN 0.74.5 (old architecture) took two real fixes —
+see [[project-heos-nativewind-setup]] in memory for the full detail, short version: npm's peer-dep
+auto-install pulled in Reanimated 4.x (needs the New Architecture), which nested a second copy of
+`react-native` and broke NativeWind's `className` type augmentation; and `nativewind@4.2.x`'s
+Metro transformer unconditionally requires the newer worklets package. Fixed by explicitly
+installing the Expo-compatible `react-native-reanimated@~3.10.1`, adding `legacy-peer-deps=true`
+to `app/.npmrc`, and pinning `nativewind@4.1.23` (the last release built for Reanimated 3.x).
+
+- [x] Verified against the running app, not just typechecked: logged in as the Nodal test admin,
+      navigated machine list → passport → chat → back, and triggered a real form validation error,
+      all via a real browser driving the Expo web build. Zero console errors.
+
 ## Open items / blockers
 
 None currently blocking. Next up on the product side: the add-to-record extraction step from the
