@@ -3,9 +3,6 @@ dist/
 *.log
 
 # server
-server/dev.db
-server/dev.db-shm
-server/dev.db-wal
 server/.env
 
 # app

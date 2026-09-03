@@ -1,20 +1,18 @@
-// HEOS Phase 1 data model (Drizzle + SQLite for local dev).
-// Swap to drizzle-orm/pg-core + Postgres for a real deploy — shape stays the same.
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+// HEOS data model (Drizzle + Postgres — same engine locally and on Railway).
+import { pgTable, text, integer, real, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
 const id = () => text("id").primaryKey().$defaultFn(() => createId());
-const timestampCol = (sqlName: string) => integer(sqlName, { mode: "timestamp" }).notNull().$defaultFn(() => new Date());
-const createdAt = () => timestampCol("created_at");
+const createdAt = () => timestamp("created_at").notNull().defaultNow();
 
 // The tenant boundary — every fleet's machines and users hang off one organization.
-export const organizations = sqliteTable("organizations", {
+export const organizations = pgTable("organizations", {
   id: id(),
   name: text("name").notNull(),
   createdAt: createdAt(),
 });
 
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: id(),
   organizationId: text("organization_id").notNull().references(() => organizations.id),
   name: text("name").notNull(),
@@ -27,20 +25,20 @@ export const users = sqliteTable("users", {
 
 // A one-time code an admin hands out so a new teammate can join their organization
 // with a preset role, without needing email delivery or deep links.
-export const orgInvites = sqliteTable("org_invites", {
+export const orgInvites = pgTable("org_invites", {
   id: id(),
   organizationId: text("organization_id").notNull().references(() => organizations.id),
   code: text("code").notNull().unique(),
   role: text("role", { enum: ["ADMIN", "MANAGER", "MECHANIC", "DRIVER"] }).notNull(),
   createdByUserId: text("created_by_user_id").notNull().references(() => users.id),
-  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-  usedAt: integer("used_at", { mode: "timestamp" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
   usedByUserId: text("used_by_user_id").references(() => users.id),
   createdAt: createdAt(),
 });
 
 // The digital passport: one row per machine, everything else hangs off it.
-export const machines = sqliteTable("machines", {
+export const machines = pgTable("machines", {
   id: id(),
   organizationId: text("organization_id").notNull().references(() => organizations.id),
   name: text("name").notNull(), // e.g. "Loader 4" — whatever the fleet calls it
@@ -51,7 +49,7 @@ export const machines = sqliteTable("machines", {
   createdAt: createdAt(),
 });
 
-export const repairLogs = sqliteTable("repair_logs", {
+export const repairLogs = pgTable("repair_logs", {
   id: id(),
   machineId: text("machine_id").notNull().references(() => machines.id),
   mechanicId: text("mechanic_id").notNull().references(() => users.id),
@@ -60,25 +58,25 @@ export const repairLogs = sqliteTable("repair_logs", {
   createdAt: createdAt(),
 });
 
-export const driverNotes = sqliteTable("driver_notes", {
+export const driverNotes = pgTable("driver_notes", {
   id: id(),
   machineId: text("machine_id").notNull().references(() => machines.id),
   driverId: text("driver_id").notNull().references(() => users.id),
   text: text("text").notNull(),
-  resolved: integer("resolved", { mode: "boolean" }).notNull().default(false),
+  resolved: boolean("resolved").notNull().default(false),
   createdAt: createdAt(),
 });
 
-export const hoursEntries = sqliteTable("hours_entries", {
+export const hoursEntries = pgTable("hours_entries", {
   id: id(),
   machineId: text("machine_id").notNull().references(() => machines.id),
   enteredById: text("entered_by_id").notNull().references(() => users.id),
   hours: real("hours"),
   distance: real("distance"),
-  recordedAt: timestampCol("recorded_at"),
+  recordedAt: createdAt(),
 });
 
-export const diagnosticEntries = sqliteTable("diagnostic_entries", {
+export const diagnosticEntries = pgTable("diagnostic_entries", {
   id: id(),
   machineId: text("machine_id").notNull().references(() => machines.id),
   checklistName: text("checklist_name").notNull(),
@@ -87,31 +85,31 @@ export const diagnosticEntries = sqliteTable("diagnostic_entries", {
 });
 
 // Standalone parts/cost log — no in-app reordering yet (Phase 3), no supplier integration (Phase 4).
-export const parts = sqliteTable("parts", {
+export const parts = pgTable("parts", {
   id: id(),
   machineId: text("machine_id").notNull().references(() => machines.id),
   repairLogId: text("repair_log_id").references(() => repairLogs.id),
   partNumber: text("part_number").notNull(),
   description: text("description"),
   costCents: integer("cost_cents").notNull().default(0),
-  orderedAt: timestampCol("ordered_at"),
-  receivedAt: integer("received_at", { mode: "timestamp" }),
+  orderedAt: createdAt(),
+  receivedAt: timestamp("received_at"),
 });
 
 // Per-machine AI chat, pre-loaded with passport context (Phase 1 scope).
-export const chatThreads = sqliteTable("chat_threads", {
+export const chatThreads = pgTable("chat_threads", {
   id: id(),
   machineId: text("machine_id").notNull().references(() => machines.id),
   userId: text("user_id").notNull().references(() => users.id),
   createdAt: createdAt(),
 });
 
-export const chatMessages = sqliteTable("chat_messages", {
+export const chatMessages = pgTable("chat_messages", {
   id: id(),
   threadId: text("thread_id").notNull().references(() => chatThreads.id),
   role: text("role", { enum: ["user", "assistant"] }).notNull(),
   content: text("content").notNull(),
   // set true once "add this update to the record" has turned this exchange into a real record
-  addedToRecord: integer("added_to_record", { mode: "boolean" }).notNull().default(false),
+  addedToRecord: boolean("added_to_record").notNull().default(false),
   createdAt: createdAt(),
 });

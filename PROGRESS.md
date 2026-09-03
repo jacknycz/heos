@@ -40,14 +40,51 @@ can change any other user's role (including another admin's) within their own or
 - [x] App: Login/Create-Organization/Accept-Invite screens, a Team screen (Settings → Manage Team) for admins to invite teammates and change roles, and a persisted session (AsyncStorage) so the app reopens signed in
 - [x] Found and fixed a bug while testing: the JWT originally carried the user's role from login time, so a role change didn't take effect until the affected user logged out and back in — `requireAuth` now looks up the live role from the DB on every request instead
 
-**Breaking change for local dev:** the schema changed (new tables, new required columns). Delete
-`server/dev.db` (and its `-shm`/`-wal` siblings) and re-run `npm run db:push` — this migration
-tool doesn't ALTER existing tables, see the comment in `server/src/db/migrate.ts`.
+**Breaking change for local dev (superseded by the Postgres switch below):** at the time, this
+meant deleting `server/dev.db` and re-running `db:push`. SQLite is gone now — see the next entry.
+
+## 2026-09-03 — Hosting decided: Railway, moved onto real Postgres migrations
+
+Jack's handing this off to the customer eventually, so hosting needed to be decided now rather
+than bolted on later. Went with **Railway** for both the server and the database:
+
+- One project, one dashboard, one bill — Railway hosts the Express server and Postgres together
+  and auto-deploys from this GitHub repo on push.
+- Two environments in the same project, `staging` and `production`, each with its own Postgres.
+  Chose *not* to auto-sync staging into production — staging will accumulate test orgs/junk data,
+  so when the customer's pilot data is ready to go live, the plan is a deliberate one-time
+  `pg_dump` from staging → scrub obvious test data → `pg_restore` into production. Same provider,
+  standard Postgres tooling, no cross-vendor migration.
+- Account ownership starts with Jack; transferring the Railway project to the customer later (if
+  wanted) is a built-in one-click operation, so that decision doesn't block getting started.
+
+This forced the real blocker: the server was SQLite-only (`better-sqlite3`), and the schema was
+applied via a hand-rolled `CREATE TABLE IF NOT EXISTS` script that can't safely alter a live
+database. Both are fixed now:
+
+- [x] Switched the whole stack to Postgres — same engine locally and on Railway, so there's no
+      SQLite/Postgres dialect drift to manage. Driver is `postgres` (postgres.js, pure JS — no
+      native build step, consistent with the bcryptjs/Drizzle-over-Prisma pattern on this repo)
+- [x] Schema rewritten from `drizzle-orm/sqlite-core` to `drizzle-orm/pg-core` (booleans and
+      timestamps are now native Postgres types instead of SQLite's integer-mode emulation)
+- [x] Real migration workflow: `npm run db:generate` (drizzle-kit diffs `schema.ts` against
+      `server/drizzle/*.sql` history and writes a new migration file — review and commit it) and
+      `npm run db:migrate` (applies pending migrations to `DATABASE_URL`, safe to re-run). `npm
+      run db:push` still exists for fast local-only iteration, not for shared databases
+- [x] Generated and reviewed the initial migration (`server/drizzle/0000_*.sql`) — 11 tables, all
+      FKs and unique constraints present and correct
+- [x] Verified against a real local Postgres instance (installed for this purpose): migration
+      applies cleanly, and the full signup/login/invite/role-change/machine/chat flow from the
+      2026-09-03 multi-org entry above still passes end-to-end on Postgres
+- [x] Pushed to `origin` (`github.com/jacknycz/heos`) so Railway can deploy straight from the repo
 
 ## Open items / blockers
 
-None currently blocking. Next up: the add-to-record extraction step above; implement PM alert
-rules in the hours-entries route; a real `OPENAI_API_KEY` needs to go in `server/.env` before the
-chat assistant works beyond the 502 fallback. Worth hardening later (not needed for Phase 1):
-move the JWT off AsyncStorage onto `expo-secure-store` for native builds (AsyncStorage isn't
-encrypted at rest; used for now since SecureStore doesn't support the web preview target).
+None currently blocking. Next up on the product side: the add-to-record extraction step from the
+chat entry above; PM alert rules in the hours-entries route. Next up on hosting: Jack creates the
+actual Railway project (staging + production environments, Postgres attached to each), sets env
+vars from `server/.env.example`, and runs `npm run db:migrate` once per environment. A real
+`OPENAI_API_KEY` needs to go in each environment's vars before the chat assistant works beyond the
+502 fallback. Worth hardening later (not needed for Phase 1): move the JWT off AsyncStorage onto
+`expo-secure-store` for native builds (AsyncStorage isn't encrypted at rest; used for now since
+SecureStore doesn't support the web preview target).
