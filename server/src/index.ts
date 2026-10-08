@@ -13,6 +13,7 @@ import { diagnosticsRouter } from "./routes/diagnostics";
 import { partsRouter } from "./routes/parts";
 import { milestonesRouter } from "./routes/milestones";
 import { chatRouter } from "./routes/chat";
+import { transcribeRouter } from "./routes/transcribe";
 
 const app = express();
 app.use(cors());
@@ -32,6 +33,7 @@ app.use("/diagnostics", diagnosticsRouter);
 app.use("/parts", partsRouter);
 app.use("/milestones", milestonesRouter);
 app.use("/chat", chatRouter);
+app.use("/transcribe", transcribeRouter);
 
 // Catches errors from any route (including async ones, via express-async-errors) so a bad
 // request returns a 500 instead of crashing the whole server for every other user.

@@ -41,7 +41,7 @@ export function DriverNoteForm({
   return (
     <ScrollView className="flex-1" contentContainerClassName="gap-4" keyboardShouldPersistTaps="handled">
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
-      <FormField control={control} name="text" label="What happened?" multiline numberOfLines={4} className="min-h-24" />
+      <FormField control={control} name="text" label="What happened?" multiline numberOfLines={4} className="min-h-24" voice />
       <Button title={driverNote ? "Save changes" : "Submit"} onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
     </ScrollView>
   );

@@ -16,3 +16,4 @@ export { Accordion, type AccordionTone } from "./Accordion";
 export { Sheet } from "./Sheet";
 export { Tabs, type TabItem } from "./Tabs";
 export { QuickActions, type QuickAction } from "./QuickActions";
+export { VoiceInputButton } from "./VoiceInputButton";

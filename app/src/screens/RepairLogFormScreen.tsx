@@ -45,7 +45,7 @@ export function RepairLogForm({
   return (
     <ScrollView className="flex-1" contentContainerClassName="gap-4" keyboardShouldPersistTaps="handled">
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
-      <FormField control={control} name="description" label="What was done?" multiline numberOfLines={4} className="min-h-24" />
+      <FormField control={control} name="description" label="What was done?" multiline numberOfLines={4} className="min-h-24" voice />
       <PriceField control={control} name="cost" label="Cost" />
       <Button title={repairLog ? "Save changes" : "Save"} onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
     </ScrollView>

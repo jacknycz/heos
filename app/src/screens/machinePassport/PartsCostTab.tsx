@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Image, Modal, Pressable, View } from "react-native";
-import { Button, Card, Text } from "../../ui";
+import { Badge, Button, Card, Text } from "../../ui";
 
 type Part = {
   id: string;
@@ -8,6 +8,7 @@ type Part = {
   description?: string | null;
   costCents: number;
   orderedAt: string;
+  receivedAt: string | null;
   receipts: { id: string; image: string }[];
 };
 
@@ -17,10 +18,12 @@ export function PartsCostTab({
   parts,
   onAddPress,
   onEditPress,
+  onMarkReceived,
 }: {
   parts: Part[];
   onAddPress: () => void;
   onEditPress: (part: Part) => void;
+  onMarkReceived: (part: Part) => void;
 }) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const total = parts.reduce((sum, p) => sum + p.costCents, 0);
@@ -53,10 +56,17 @@ export function PartsCostTab({
                   ))}
                 </View>
               ) : null}
-              <View className="flex-1">
+              <View className="flex-1 gap-1">
                 <Text variant="body">{p.partNumber}</Text>
                 {p.description ? <Text variant="muted">{p.description}</Text> : null}
                 <Text variant="muted">{new Date(p.orderedAt).toLocaleDateString()}</Text>
+                {p.receivedAt ? (
+                  <Badge label="Received" tone="success" />
+                ) : (
+                  <Pressable onPress={() => onMarkReceived(p)}>
+                    <Badge label="Ordered · tap to mark received" tone="warning" />
+                  </Pressable>
+                )}
               </View>
               <View className="items-end gap-1">
                 <Text variant="body">${(p.costCents / 100).toFixed(2)}</Text>

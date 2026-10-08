@@ -16,7 +16,13 @@
           "cameraPermission": "HEOS uses your camera to take photos of receipts for parts and cost entries."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "HEOS uses your microphone to transcribe voice notes into repair logs and driver notes."
+        }
+      ]
     ]
   }
 }

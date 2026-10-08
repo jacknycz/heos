@@ -87,6 +87,17 @@ partsRouter.delete("/:id/receipts/:receiptId", async (req, res) => {
   res.status(204).send();
 });
 
+// Mark a part as received — the fulfillment half of order status (ordered vs. received).
+partsRouter.post("/:id/receive", async (req, res) => {
+  const [part] = await db.select().from(schema.parts).where(eq(schema.parts.id, req.params.id));
+  if (!part || !(await assertMachineInOrg(part.machineId, req.user!.organizationId))) {
+    return res.status(404).json({ error: "not found" });
+  }
+
+  const [updated] = await db.update(schema.parts).set({ receivedAt: new Date() }).where(eq(schema.parts.id, req.params.id)).returning();
+  res.json(updated);
+});
+
 // Repeat-order detection: same part number ordered more than once across the fleet —
 // the "4 filters nobody remembers ordering" scenario from the SOW. Scoped to the caller's org.
 partsRouter.get("/repeat-orders", async (req, res) => {

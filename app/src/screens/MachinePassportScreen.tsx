@@ -41,6 +41,7 @@ type Passport = {
     description?: string | null;
     costCents: number;
     orderedAt: string;
+    receivedAt: string | null;
     receipts: { id: string; image: string }[];
   }[];
   milestones: Milestone[];
@@ -208,6 +209,7 @@ export function MachinePassportScreen({ route, navigation }: Props) {
                 parts={passport.parts}
                 onAddPress={() => navigation.navigate("PartForm", { machineId })}
                 onEditPress={(part) => navigation.navigate("PartForm", { machineId, part })}
+                onMarkReceived={(part) => apiPost(`/parts/${part.id}/receive`, {}).then(refetch)}
               />
             </View>
             {/* Clears the floating chat button so it never covers the last card. */}
