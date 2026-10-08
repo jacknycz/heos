@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiGet, apiPost, setAuthToken } from "../api/client";
+import { apiGet, apiPatch, apiPost, setAuthToken } from "../api/client";
+import { registerForPushNotifications } from "../lib/pushNotifications";
 
 export type Role = "ADMIN" | "MANAGER" | "MECHANIC" | "DRIVER";
 export type CurrentUser = { id: string; organizationId: string; organizationName?: string; name: string; email: string; role: Role };
@@ -45,6 +46,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
+  // Registers this device's push token whenever a user becomes signed in — covers login,
+  // signup, invite-accept, and a restored session on app launch, all in one place.
+  useEffect(() => {
+    if (user) registerForPushNotifications();
+  }, [user?.id]);
+
   async function login(email: string, password: string) {
     const res = await apiPost<AuthResponse>("/auth/login", { email, password });
     await afterAuth(res);
@@ -64,6 +71,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    // Best-effort: clear this device's push token so a signed-out device doesn't keep getting
+    // this account's milestone alerts. Must happen before the auth token is cleared below.
+    try {
+      await apiPatch("/users/me/push-token", { pushToken: null });
+    } catch {
+      // not worth blocking logout over
+    }
     await AsyncStorage.removeItem(TOKEN_KEY);
     setAuthToken(null);
     setUser(null);

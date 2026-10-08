@@ -39,6 +39,24 @@ service, not just editing a variable. This is a preview convenience, not the rea
 distribution is via Expo Go (dev) or an EAS build submitted to TestFlight/Play (production), neither
 of which is set up yet.
 
+## Frontend conventions
+
+- **Colors**: every color value used by the app lives in `app/src/theme/palette.js` — a plain
+  CommonJS module `app/tailwind.config.js` requires for its custom `primary` scale, and that app
+  code also imports directly (`primary`/`neutral`) wherever a literal hex is unavoidable (native
+  `color=` props on icons/`ActivityIndicator`, `LinearGradient` `colors` arrays — anywhere
+  outside NativeWind's className/`dark:` system). Never hand-copy a hex string into a component;
+  add or change it in `palette.js` once and every consumer stays in sync. `app/src/theme/color.ts`
+  (`hexToRgba`) exists for the same reason — deriving a transparent variant of a palette color
+  instead of hardcoding a separate rgba triplet that can drift from it.
+- **Dark mode**: `app/tailwind.config.js` sets `darkMode: "class"` so it can be toggled manually
+  (Settings → Appearance, or the same control on `/design`) instead of only following the OS.
+  `app/src/theme/colorScheme.ts` persists the choice; nothing is stored until the user picks
+  Light or Dark explicitly, so a fresh install just follows the OS.
+- **Component kit**: every shared UI primitive lives in `app/src/ui/` and is demoed on a `/design`
+  route (web only, no auth yet — see the TODO in `App.tsx`) for a quick visual reference while
+  building.
+
 ## Phase 1 scope
 
 Multi-organization from the ground up: an organization has multiple users, always has at least one

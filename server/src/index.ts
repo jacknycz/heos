@@ -4,28 +4,33 @@ import express from "express";
 import cors from "cors";
 import { authRouter } from "./routes/auth";
 import { usersRouter } from "./routes/users";
+import { locationsRouter } from "./routes/locations";
 import { machinesRouter } from "./routes/machines";
 import { repairLogsRouter } from "./routes/repairLogs";
 import { driverNotesRouter } from "./routes/driverNotes";
 import { hoursEntriesRouter } from "./routes/hoursEntries";
 import { diagnosticsRouter } from "./routes/diagnostics";
 import { partsRouter } from "./routes/parts";
+import { milestonesRouter } from "./routes/milestones";
 import { chatRouter } from "./routes/chat";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+// Default 100kb is too small for a receipt photo posted as a base64 data URL.
+app.use(express.json({ limit: "10mb" }));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
+app.use("/locations", locationsRouter);
 app.use("/machines", machinesRouter);
 app.use("/repair-logs", repairLogsRouter);
 app.use("/driver-notes", driverNotesRouter);
 app.use("/hours-entries", hoursEntriesRouter);
 app.use("/diagnostics", diagnosticsRouter);
 app.use("/parts", partsRouter);
+app.use("/milestones", milestonesRouter);
 app.use("/chat", chatRouter);
 
 // Catches errors from any route (including async ones, via express-async-errors) so a bad

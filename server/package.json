@@ -11,26 +11,27 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
-    "postgres": "^3.4.9",
-    "drizzle-orm": "^0.45.2",
-    "express": "^4.21.0",
-    "cors": "^2.8.5",
-    "zod": "^3.23.8",
     "@paralleldrive/cuid2": "^2.2.2",
-    "openai": "^7.9.0",
-    "express-async-errors": "^3.1.1",
     "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.45.2",
+    "expo-server-sdk": "^7.2.0",
+    "express": "^4.21.0",
+    "express-async-errors": "^3.1.1",
     "jsonwebtoken": "^9.0.2",
-    "dotenv": "^16.4.5"
+    "openai": "^7.9.0",
+    "postgres": "^3.4.9",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.10",
-    "typescript": "^5.6.2",
-    "tsx": "^4.19.1",
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "@types/node": "^22.7.4",
     "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.7"
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.7.4",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
   }
 }

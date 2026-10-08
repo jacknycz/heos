@@ -1,5 +1,5 @@
 // HEOS data model (Drizzle + Postgres — same engine locally and on Railway).
-import { pgTable, text, integer, real, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, boolean, timestamp, date } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
 const id = () => text("id").primaryKey().$defaultFn(() => createId());
@@ -20,6 +20,9 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   // ADMIN controls every other user's role (including other admins) within their organization.
   role: text("role", { enum: ["ADMIN", "MANAGER", "MECHANIC", "DRIVER"] }).notNull(),
+  // Expo push token, registered on login when the user grants notification permission — null
+  // until then, or on web (no push support there). One token per user, last-login-wins.
+  pushToken: text("push_token"),
   createdAt: createdAt(),
 });
 
@@ -37,6 +40,16 @@ export const orgInvites = pgTable("org_invites", {
   createdAt: createdAt(),
 });
 
+// A physical site a machine can be based at — org-scoped, optional per machine (Phase 1: name +
+// free-text address only, no geocoding/maps).
+export const locations = pgTable("locations", {
+  id: id(),
+  organizationId: text("organization_id").notNull().references(() => organizations.id),
+  name: text("name").notNull(),
+  address: text("address"),
+  createdAt: createdAt(),
+});
+
 // The digital passport: one row per machine, everything else hangs off it.
 export const machines = pgTable("machines", {
   id: id(),
@@ -46,7 +59,24 @@ export const machines = pgTable("machines", {
   model: text("model"),
   year: integer("year"),
   serialOrVin: text("serial_or_vin"),
+  engineNumber: text("engine_number"),
+  fleetNumber: text("fleet_number"),
+  registrationNumber: text("registration_number"),
+  registrationExpiresAt: date("registration_expires_at"),
+  // Optional — a machine doesn't have to belong to a location. Deleting a location just clears
+  // this on any machine that had it, rather than blocking the delete.
+  locationId: text("location_id").references(() => locations.id, { onDelete: "set null" }),
+  // Which reading milestones on this machine are measured in — a machine-level choice, not a
+  // per-milestone one, since a machine only has one meter that matters (hour meter or odometer).
+  trackingUnit: text("tracking_unit", { enum: ["hours", "miles"] }).notNull().default("hours"),
   createdAt: createdAt(),
+  // Bumped automatically on every update (see machines.ts's PATCH route) — now that a machine
+  // can actually be edited, this is real activity for the dashboard's "recently edited
+  // machines" section, not just the child-record-timestamp proxy that used to be the only signal.
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const repairLogs = pgTable("repair_logs", {
@@ -76,6 +106,22 @@ export const hoursEntries = pgTable("hours_entries", {
   recordedAt: createdAt(),
 });
 
+// A maintenance rule for a machine, measured against its trackingUnit reading — "recurring"
+// fires again every thresholdValue units past the last completion (e.g. every 500 hrs);
+// "one_time" fires once at thresholdValue and is done. lastCompletedAtValue/lastCompletedAt
+// double duty for both: for recurring they reset the countdown, for one_time their mere
+// presence means "done" — see the due-date math in lib/machineContext.ts.
+export const milestones = pgTable("milestones", {
+  id: id(),
+  machineId: text("machine_id").notNull().references(() => machines.id),
+  label: text("label").notNull(),
+  type: text("type", { enum: ["recurring", "one_time"] }).notNull(),
+  thresholdValue: real("threshold_value").notNull(),
+  lastCompletedAtValue: real("last_completed_at_value"),
+  lastCompletedAt: timestamp("last_completed_at"),
+  createdAt: createdAt(),
+});
+
 export const diagnosticEntries = pgTable("diagnostic_entries", {
   id: id(),
   machineId: text("machine_id").notNull().references(() => machines.id),
@@ -96,6 +142,20 @@ export const parts = pgTable("parts", {
   receivedAt: timestamp("received_at"),
 });
 
+// One part/cost entry can have several receipt photos (a multi-page receipt, or a retake of a
+// blurry shot without losing the first one) — a child table like every other machine record
+// here, rather than a single column, so each photo can be added/deleted independently.
+export const partReceipts = pgTable("part_receipts", {
+  id: id(),
+  partId: text("part_id").notNull().references(() => parts.id),
+  // Base64 data URL, stored inline — no file/blob storage exists in this project yet (no S3, no
+  // persistent volume on Railway), and this keeps it working identically in local dev and on
+  // Railway with zero new infra. Fine for Phase 1 volumes; revisit if photo counts/sizes grow
+  // enough that Postgres row bloat becomes a real concern.
+  image: text("image").notNull(),
+  createdAt: createdAt(),
+});
+
 // Per-machine AI chat, pre-loaded with passport context (Phase 1 scope).
 export const chatThreads = pgTable("chat_threads", {
   id: id(),
@@ -111,5 +171,34 @@ export const chatMessages = pgTable("chat_messages", {
   content: text("content").notNull(),
   // set true once "add this update to the record" has turned this exchange into a real record
   addedToRecord: boolean("added_to_record").notNull().default(false),
+  createdAt: createdAt(),
+});
+
+// A durable "what was discussed/advised" log entry, generated on demand ("Save Summary") rather
+// than automatically — this project has no scheduler. coveredThroughMessageId marks the last
+// message folded into this summary, so the next request only has to summarize what comes after
+// it — tracked by message ID rather than its timestamp deliberately: Postgres timestamps carry
+// microsecond precision but a JS Date can only hold milliseconds, so reading a message's
+// createdAt back out and later comparing chatMessages.createdAt > thatValue would silently
+// re-match that same message every time (its own stored value is a few microseconds past the
+// truncated copy). Comparing by array position after fetching messages in DB order sidesteps the
+// precision loss entirely. machineId is denormalized (not just threadId) so getMachinePassport
+// can fetch it the same flat way as every other child table.
+export const chatSummaries = pgTable("chat_summaries", {
+  id: id(),
+  machineId: text("machine_id").notNull().references(() => machines.id),
+  threadId: text("thread_id").notNull().references(() => chatThreads.id),
+  summary: text("summary").notNull(),
+  coveredThroughMessageId: text("covered_through_message_id").notNull().references(() => chatMessages.id),
+  createdAt: createdAt(),
+});
+
+// An "AI Log" entry: an assistant message the user chose to keep on the machine's record. Holds the
+// message text as-is for now; a later pass may turn these into structured repair logs.
+export const aiLogs = pgTable("ai_logs", {
+  id: id(),
+  machineId: text("machine_id").notNull().references(() => machines.id),
+  sourceMessageId: text("source_message_id").notNull().references(() => chatMessages.id),
+  content: text("content").notNull(),
   createdAt: createdAt(),
 });

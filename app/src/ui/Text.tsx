@@ -1,14 +1,15 @@
 import { Text as RNText, type TextProps as RNTextProps } from "react-native";
 import clsx from "clsx";
 
-type Variant = "title" | "heading" | "body" | "label" | "muted";
+type Variant = "title" | "section" | "heading" | "body" | "label" | "muted";
 
 const VARIANTS: Record<Variant, string> = {
-  title: "text-2xl font-bold text-neutral-900",
-  heading: "text-base font-semibold text-neutral-900",
-  body: "text-base text-neutral-900",
-  label: "text-sm font-medium text-neutral-700",
-  muted: "text-sm text-neutral-500",
+  title: "text-2xl font-bold text-neutral-900 dark:text-neutral-50",
+  section: "text-xl font-semibold text-neutral-900 dark:text-neutral-50",
+  heading: "text-base font-semibold text-neutral-900 dark:text-neutral-50",
+  body: "text-base text-neutral-900 dark:text-neutral-50",
+  label: "text-sm font-medium text-neutral-700 dark:text-neutral-300",
+  muted: "text-sm text-neutral-500 dark:text-neutral-400",
 };
 
 export type TextProps = RNTextProps & { variant?: Variant; className?: string };

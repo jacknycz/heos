@@ -1,10 +1,14 @@
 import "./global.css";
+import { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Platform, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/auth/AuthContext";
 import { AuthStack } from "./src/navigation/AuthStack";
 import { RootNavigator } from "./src/navigation/RootNavigator";
+import { DesignSystemScreen } from "./src/screens/DesignSystemScreen";
+import { applyStoredColorScheme } from "./src/theme/colorScheme";
 
 function Gate() {
   const { user, loading } = useAuth();
@@ -19,6 +23,22 @@ function Gate() {
 }
 
 export default function App() {
+  useEffect(() => {
+    applyStoredColorScheme();
+  }, []);
+
+  // Component-kit reference, reachable at /design on web — no auth gate yet (see TODO
+  // to password-protect it), so it's checked before AuthProvider/NavigationContainer.
+  // Normally a navigator (bottom-tabs/native-stack) supplies SafeAreaProviderCompat for
+  // Screen's SafeAreaView; outside any navigator here, it needs its own provider.
+  if (Platform.OS === "web" && window.location.pathname.startsWith("/design")) {
+    return (
+      <SafeAreaProvider>
+        <DesignSystemScreen />
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <AuthProvider>
       <NavigationContainer>

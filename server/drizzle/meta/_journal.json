@@ -8,6 +8,76 @@
       "when": 1788398163400,
       "tag": "0000_hesitant_may_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789308368653,
+      "tag": "0001_worthless_toad",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789309588122,
+      "tag": "0002_groovy_sebastian_shaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789311021754,
+      "tag": "0003_needy_misty_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789314548781,
+      "tag": "0004_awesome_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789319493752,
+      "tag": "0005_aberrant_silver_fox",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789423290667,
+      "tag": "0006_cuddly_havok",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789424035942,
+      "tag": "0007_rapid_brother_voodoo",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789424063317,
+      "tag": "0008_dark_captain_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790532799575,
+      "tag": "0009_flashy_stephen_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791325014899,
+      "tag": "0010_furry_mad_thinker",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,16 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": { "supportsTablet": false },
-    "android": {}
+    "android": {},
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "HEOS uses your photos to attach receipt images to parts and cost entries.",
+          "cameraPermission": "HEOS uses your camera to take photos of receipts for parts and cost entries."
+        }
+      ],
+      "expo-notifications"
+    ]
   }
 }

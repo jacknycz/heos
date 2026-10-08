@@ -6,6 +6,8 @@ import type { AuthStackParamList } from "../../navigation/AuthStack";
 import { useAuth } from "../../auth/AuthContext";
 import { loginSchema, type LoginFormValues } from "../../schemas/auth";
 import { Screen, Text, FormField, Button } from "../../ui";
+import { LoginHero } from "./LoginHero";
+import { LoginLogo } from "./LoginLogo";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
 
@@ -25,19 +27,37 @@ export function LoginScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen className="justify-center">
-      <Text variant="title" className="mb-2">HEOS</Text>
-      {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
-      <FormField control={control} name="email" label="Email" autoCapitalize="none" keyboardType="email-address" />
-      <FormField control={control} name="password" label="Password" secureTextEntry />
-      <Button
-        title="Log in"
-        onPress={handleSubmit(onSubmit)}
-        loading={formState.isSubmitting}
-      />
-      <View className="mt-4 gap-2">
-        <Button title="Create a new organization" variant="secondary" onPress={() => navigation.navigate("CreateOrganization")} />
-        <Button title="I have an invite code" variant="secondary" onPress={() => navigation.navigate("AcceptInvite")} />
+    <Screen padded={false}>
+      <LoginHero />
+      <View className="flex-1 justify-center gap-4 p-6">
+        <View className="mb-2">
+          <LoginLogo />
+        </View>
+        {formState.errors.root ? <Text className="text-danger-200">{formState.errors.root.message}</Text> : null}
+        <FormField
+          control={control}
+          name="email"
+          label="Email"
+          labelClassName="text-white"
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <FormField control={control} name="password" label="Password" labelClassName="text-white" secureTextEntry />
+        <Button title="Log in" variant="fancy" className="mt-4" onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
+        <View className="mt-4 gap-2">
+          <Button
+            title="Create a new organization"
+            variant="ghost"
+            textClassName="text-white"
+            onPress={() => navigation.navigate("CreateOrganization")}
+          />
+          <Button
+            title="I have an invite code"
+            variant="ghost"
+            textClassName="text-white"
+            onPress={() => navigation.navigate("AcceptInvite")}
+          />
+        </View>
       </View>
     </Screen>
   );

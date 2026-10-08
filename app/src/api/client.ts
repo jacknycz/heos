@@ -46,3 +46,8 @@ export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
   if (!res.ok) throw new Error(await extractErrorMessage(res));
   return res.json();
 }
+
+export async function apiDelete(path: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}${path}`, { method: "DELETE", headers: authHeaders() });
+  if (!res.ok) throw new Error(await extractErrorMessage(res));
+}

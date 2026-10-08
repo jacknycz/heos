@@ -19,6 +19,15 @@ usersRouter.get("/", async (req, res) => {
   res.json(rows);
 });
 
+// Self-registration of this device's Expo push token, called after the app gets notification
+// permission — not admin-gated, every user registers their own.
+usersRouter.patch("/me/push-token", async (req, res) => {
+  const parsed = z.object({ pushToken: z.string().min(1).nullable() }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json(parsed.error.flatten());
+  await db.update(schema.users).set({ pushToken: parsed.data.pushToken }).where(eq(schema.users.id, req.user!.id));
+  res.json({ pushToken: parsed.data.pushToken });
+});
+
 // Admin-only: change any teammate's role, including another admin's.
 usersRouter.patch("/:id/role", requireAdmin, async (req, res) => {
   const schemaValidator = z.object({ role: z.enum(ROLES) });

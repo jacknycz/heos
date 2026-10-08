@@ -1,0 +1,3 @@
+ALTER TABLE "chat_summaries" ALTER COLUMN "covered_through_at" DROP NOT NULL;--> statement-breakpoint
+ALTER TABLE "chat_summaries" ADD COLUMN "covered_through_message_id" text;--> statement-breakpoint
+ALTER TABLE "chat_summaries" ADD CONSTRAINT "chat_summaries_covered_through_message_id_chat_messages_id_fk" FOREIGN KEY ("covered_through_message_id") REFERENCES "public"."chat_messages"("id") ON DELETE no action ON UPDATE no action;

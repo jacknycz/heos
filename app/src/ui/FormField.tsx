@@ -2,30 +2,35 @@ import { TextInput, View, type TextInputProps } from "react-native";
 import { useController, type Control, type FieldValues, type Path } from "react-hook-form";
 import clsx from "clsx";
 import { Text } from "./Text";
+import { neutral } from "../theme/palette";
 
 export type FormFieldProps<T extends FieldValues> = Omit<TextInputProps, "value" | "onChangeText"> & {
   control: Control<T>;
   name: Path<T>;
   label: string;
+  disabled?: boolean;
+  /** Overrides the label's default color — e.g. a field sitting on a colored (non-surface) background. */
+  labelClassName?: string;
 };
 
 // Every text input in the app should be this, not a bare TextInput — label placement,
 // error display, and input styling all stay consistent, and validation comes from the
 // zod schema passed to useForm's resolver instead of being hand-rolled per screen.
-export function FormField<T extends FieldValues>({ control, name, label, className, ...inputProps }: FormFieldProps<T>) {
+export function FormField<T extends FieldValues>({ control, name, label, className, labelClassName, disabled, ...inputProps }: FormFieldProps<T>) {
   const { field, fieldState } = useController({ control, name });
 
   return (
-    <View className="gap-1.5">
-      <Text variant="label">{label}</Text>
+    <View className={clsx("gap-1.5", disabled && "opacity-50")}>
+      <Text variant="label" className={labelClassName}>{label}</Text>
       <TextInput
         value={typeof field.value === "string" ? field.value : (field.value ?? "")}
         onChangeText={field.onChange}
         onBlur={field.onBlur}
-        placeholderTextColor="#94a3b8"
+        editable={!disabled}
+        placeholderTextColor={neutral[400]}
         className={clsx(
-          "rounded-card border bg-white px-3 py-2.5 text-base text-neutral-900",
-          fieldState.error ? "border-danger-500" : "border-neutral-300",
+          "rounded-card border bg-white px-3 py-2.5 text-base text-neutral-900 dark:bg-neutral-900 dark:text-neutral-50",
+          fieldState.error ? "border-danger-500" : "border-neutral-300 dark:border-neutral-700",
           className,
         )}
         {...inputProps}

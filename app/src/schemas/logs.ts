@@ -17,3 +17,10 @@ export const hoursEntrySchema = z.object({
   distance: z.string(),
 });
 export type HoursEntryFormValues = z.infer<typeof hoursEntrySchema>;
+
+export const partSchema = z.object({
+  partNumber: z.string().min(1, "Enter a part number"),
+  description: z.string().optional(),
+  cost: z.string(),
+});
+export type PartFormValues = z.infer<typeof partSchema>;

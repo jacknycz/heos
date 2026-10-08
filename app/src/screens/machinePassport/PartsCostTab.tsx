@@ -1,0 +1,79 @@
+import { useState } from "react";
+import { Image, Modal, Pressable, View } from "react-native";
+import { Button, Card, Text } from "../../ui";
+
+type Part = {
+  id: string;
+  partNumber: string;
+  description?: string | null;
+  costCents: number;
+  orderedAt: string;
+  receipts: { id: string; image: string }[];
+};
+
+// Every part/order tied to this machine, plus a running total — the concrete "what has this
+// machine cost us" view.
+export function PartsCostTab({
+  parts,
+  onAddPress,
+  onEditPress,
+}: {
+  parts: Part[];
+  onAddPress: () => void;
+  onEditPress: (part: Part) => void;
+}) {
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const total = parts.reduce((sum, p) => sum + p.costCents, 0);
+
+  return (
+    <View className="gap-3">
+      <View className="flex-row justify-end">
+        <Button size="sm" title="Add New" onPress={onAddPress} />
+      </View>
+
+      <Card className="flex-row items-center justify-between">
+        <Text variant="heading">Total spend</Text>
+        <Text variant="heading" className="text-primary-600">
+          ${(total / 100).toFixed(2)}
+        </Text>
+      </Card>
+
+      <Card className="gap-2">
+        {parts.length === 0 ? (
+          <Text variant="muted">Nothing logged yet.</Text>
+        ) : (
+          parts.map((p) => (
+            <View key={p.id} className="flex-row items-center gap-3">
+              {p.receipts.length > 0 ? (
+                <View className="flex-row gap-1">
+                  {p.receipts.slice(0, 3).map((r) => (
+                    <Pressable key={r.id} onPress={() => setPreviewImage(r.image)}>
+                      <Image source={{ uri: r.image }} className="h-10 w-10 rounded-card border border-neutral-300" />
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+              <View className="flex-1">
+                <Text variant="body">{p.partNumber}</Text>
+                {p.description ? <Text variant="muted">{p.description}</Text> : null}
+                <Text variant="muted">{new Date(p.orderedAt).toLocaleDateString()}</Text>
+              </View>
+              <View className="items-end gap-1">
+                <Text variant="body">${(p.costCents / 100).toFixed(2)}</Text>
+                <Pressable onPress={() => onEditPress(p)}>
+                  <Text className="font-semibold text-primary-600">Edit</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))
+        )}
+      </Card>
+
+      <Modal visible={!!previewImage} transparent animationType="fade" onRequestClose={() => setPreviewImage(null)}>
+        <Pressable className="flex-1 items-center justify-center bg-black/80" onPress={() => setPreviewImage(null)}>
+          {previewImage ? <Image source={{ uri: previewImage }} className="h-4/5 w-11/12" resizeMode="contain" /> : null}
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
