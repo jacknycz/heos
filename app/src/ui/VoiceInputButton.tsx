@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ActivityIndicator, Pressable } from "react-native";
+import { ActivityIndicator, Platform, Pressable } from "react-native";
 import { Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,6 +7,23 @@ import { apiPost } from "../api/client";
 import { neutral, danger } from "../theme/palette";
 
 type Status = "idle" | "recording" | "transcribing";
+
+// expo-av gives back a native file:// URI on iOS/Android (readable via expo-file-system) but a
+// blob: URI on web, which expo-file-system can't read at all — that needs fetch + FileReader
+// instead. Returns a full data URL either way so the caller doesn't need to know the difference.
+async function recordingToDataUrl(uri: string): Promise<string> {
+  if (Platform.OS === "web") {
+    const blob = await (await fetch(uri)).blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  return `data:audio/m4a;base64,${base64}`;
+}
 
 // A mic button that records a short clip, uploads it as a base64 data URL (same pattern as
 // receipt photos — see ReceiptsField), and hands the transcribed text back to the caller.
@@ -34,8 +51,8 @@ export function VoiceInputButton({ onTranscript }: { onTranscript: (text: string
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       if (!uri) return;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-      const { text } = await apiPost<{ text: string }>("/transcribe", { audio: `data:audio/m4a;base64,${base64}` });
+      const audio = await recordingToDataUrl(uri);
+      const { text } = await apiPost<{ text: string }>("/transcribe", { audio });
       if (text) onTranscript(text);
     } finally {
       setStatus("idle");
