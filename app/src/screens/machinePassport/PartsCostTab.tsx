@@ -51,7 +51,7 @@ export function PartsCostTab({
                 <View className="flex-row gap-1">
                   {p.receipts.slice(0, 3).map((r) => (
                     <Pressable key={r.id} onPress={() => setPreviewImage(r.image)}>
-                      <Image source={{ uri: r.image }} className="h-10 w-10 rounded-card border border-neutral-300 dark:border-neutral-700" />
+                      <Image source={{ uri: r.image }} className="size-10 rounded-card border border-neutral-300 dark:border-neutral-700" />
                     </Pressable>
                   ))}
                 </View>

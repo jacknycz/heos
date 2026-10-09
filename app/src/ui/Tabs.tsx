@@ -35,18 +35,13 @@ export function Tabs({
               <>
                 {tab.icon ? <Ionicons name={tab.icon} size={26} color={active ? white : neutral[500]} /> : null}
                 <Text
-                  className={clsx(
-                    "text-center text-xs font-semibold leading-none",
-                    active ? "text-white" : "text-neutral-500 dark:text-neutral-400",
-                  )}
+                  className={clsx("text-center text-xs font-semibold leading-none", active ? "text-white" : "text-neutral-500 dark:text-neutral-400")}
                 >
                   {tab.label}
                 </Text>
               </>
             ) : (
-              <Text className={clsx("text-sm font-semibold", active ? "text-white" : "text-neutral-500 dark:text-neutral-400")}>
-                {tab.label}
-              </Text>
+              <Text className={clsx("text-sm font-semibold", active ? "text-white" : "text-neutral-500 dark:text-neutral-400")}>{tab.label}</Text>
             )}
           </Pressable>
         );

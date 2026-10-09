@@ -21,7 +21,10 @@ repairLogsRouter.post("/", async (req, res) => {
   if (!(await assertMachineInOrg(parsed.data.machineId, req.user!.organizationId))) {
     return res.status(404).json({ error: "machine not found" });
   }
-  const [log] = await db.insert(schema.repairLogs).values({ ...parsed.data, mechanicId: req.user!.id }).returning();
+  const [log] = await db
+    .insert(schema.repairLogs)
+    .values({ ...parsed.data, mechanicId: req.user!.id })
+    .returning();
   res.status(201).json(log);
 });
 
@@ -42,10 +45,6 @@ repairLogsRouter.patch("/:id", async (req, res) => {
     return res.status(404).json({ error: "not found" });
   }
 
-  const [updated] = await db
-    .update(schema.repairLogs)
-    .set(parsed.data)
-    .where(eq(schema.repairLogs.id, req.params.id))
-    .returning();
+  const [updated] = await db.update(schema.repairLogs).set(parsed.data).where(eq(schema.repairLogs.id, req.params.id)).returning();
   res.json(updated);
 });

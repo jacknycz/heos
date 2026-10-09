@@ -13,11 +13,5 @@ type CardProps = ViewProps & { variant?: keyof typeof VARIANTS };
 
 // Every card lifts off the page with the same subtle shadow.
 export function Card({ variant = "default", className, style, ...props }: CardProps) {
-  return (
-    <View
-      className={clsx("rounded-card p-4", VARIANTS[variant], className)}
-      style={[shadows.subtle, style]}
-      {...props}
-    />
-  );
+  return <View className={clsx("rounded-card p-4", VARIANTS[variant], className)} style={[shadows.subtle, style]} {...props} />;
 }

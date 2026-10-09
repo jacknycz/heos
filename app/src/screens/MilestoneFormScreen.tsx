@@ -88,9 +88,7 @@ export function MilestoneFormScreen({ route, navigation }: Props) {
       <FormField
         control={control}
         name="thresholdValue"
-        label={
-          type === "recurring" ? `Every how many ${unitLabel}` : startingNow ? `How many ${unitLabel} from now` : `At how many ${unitLabel}`
-        }
+        label={type === "recurring" ? `Every how many ${unitLabel}` : startingNow ? `How many ${unitLabel} from now` : `At how many ${unitLabel}`}
         keyboardType="decimal-pad"
         placeholder="e.g. 500"
       />

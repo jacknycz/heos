@@ -23,10 +23,16 @@ export function TeamScreen() {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    apiGet<Member[]>("/users").then(setMembers).catch((err) => setError(err.message));
+    apiGet<Member[]>("/users")
+      .then(setMembers)
+      .catch((err) => setError(err.message));
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   async function changeRole(memberId: string, role: Role) {
     setError(null);
@@ -79,13 +85,18 @@ export function TeamScreen() {
                 </Text>
               </Card>
             ) : null}
-            <Text variant="heading" className="mt-2">Members</Text>
+            <Text variant="heading" className="mt-2">
+              Members
+            </Text>
           </View>
         }
         renderItem={({ item }) => (
           <Card className="gap-2">
             <View className="flex-row items-center gap-2">
-              <Text variant="heading">{item.name}{item.id === user.id ? " (you)" : ""}</Text>
+              <Text variant="heading">
+                {item.name}
+                {item.id === user.id ? " (you)" : ""}
+              </Text>
               <Badge label={item.role} tone={ROLE_TONE[item.role]} />
             </View>
             <Text variant="muted">{item.email}</Text>

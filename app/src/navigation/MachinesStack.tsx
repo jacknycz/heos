@@ -98,9 +98,7 @@ export function MachinesStack() {
           headerLeft: () => (
             <Pressable
               onPress={() =>
-                navigation.getState().index > 0
-                  ? navigation.goBack()
-                  : navigation.reset({ index: 0, routes: [{ name: "MachineList" }] })
+                navigation.getState().index > 0 ? navigation.goBack() : navigation.reset({ index: 0, routes: [{ name: "MachineList" }] })
               }
               hitSlop={8}
               className="pr-2"

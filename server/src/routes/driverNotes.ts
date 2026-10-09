@@ -20,7 +20,10 @@ driverNotesRouter.post("/", async (req, res) => {
   if (!(await assertMachineInOrg(parsed.data.machineId, req.user!.organizationId))) {
     return res.status(404).json({ error: "machine not found" });
   }
-  const [note] = await db.insert(schema.driverNotes).values({ ...parsed.data, driverId: req.user!.id }).returning();
+  const [note] = await db
+    .insert(schema.driverNotes)
+    .values({ ...parsed.data, driverId: req.user!.id })
+    .returning();
   res.status(201).json(note);
 });
 
@@ -38,10 +41,6 @@ driverNotesRouter.patch("/:id", async (req, res) => {
     return res.status(404).json({ error: "not found" });
   }
 
-  const [updated] = await db
-    .update(schema.driverNotes)
-    .set(parsed.data)
-    .where(eq(schema.driverNotes.id, req.params.id))
-    .returning();
+  const [updated] = await db.update(schema.driverNotes).set(parsed.data).where(eq(schema.driverNotes.id, req.params.id)).returning();
   res.json(updated);
 });

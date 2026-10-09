@@ -18,7 +18,11 @@ const createSchema = z.object({
 
 // A milestone that just became due (wasn't before this entry, is now) pushes ADMIN/MANAGER
 // users in the org — mechanics/drivers log the reading, managers decide what to do about it.
-async function notifyNewlyDueMilestones(machine: { id: string; name: string; trackingUnit: "hours" | "miles"; organizationId: string }, previousValue: number | null, newValue: number) {
+async function notifyNewlyDueMilestones(
+  machine: { id: string; name: string; trackingUnit: "hours" | "miles"; organizationId: string },
+  previousValue: number | null,
+  newValue: number,
+) {
   const milestoneRows = await db.select().from(schema.milestones).where(eq(schema.milestones.machineId, machine.id));
   const newlyDue = milestoneRows.filter((m) => !evaluateMilestone(m, previousValue).isDue && evaluateMilestone(m, newValue).isDue);
   if (newlyDue.length === 0) return;
@@ -49,7 +53,10 @@ hoursEntriesRouter.post("/", async (req, res) => {
   }
 
   const previousValue = await getCurrentTrackingValue(machine.id, machine.trackingUnit);
-  const [entry] = await db.insert(schema.hoursEntries).values({ ...parsed.data, enteredById: req.user!.id }).returning();
+  const [entry] = await db
+    .insert(schema.hoursEntries)
+    .values({ ...parsed.data, enteredById: req.user!.id })
+    .returning();
 
   const newValue = machine.trackingUnit === "hours" ? entry.hours : entry.distance;
   if (newValue != null) {

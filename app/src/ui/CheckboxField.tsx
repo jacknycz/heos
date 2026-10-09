@@ -26,7 +26,7 @@ export function CheckboxField<T extends FieldValues>({ control, name, label, dis
     >
       <View
         className={clsx(
-          "h-5 w-5 items-center justify-center rounded border",
+          "size-5 items-center justify-center rounded border",
           checked ? "border-primary-600 bg-primary-600" : "border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900",
         )}
       >

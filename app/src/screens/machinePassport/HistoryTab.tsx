@@ -128,7 +128,7 @@ export function HistoryTab({
           {items.map((item, index) => (
             <View key={`${item.kind}-${item.id}`} className="flex-row gap-3">
               <View className="w-3 items-center">
-                <View className={clsx("mt-1.5 h-3 w-3 rounded-full", DOT_COLORS[item.kind])} />
+                <View className={clsx("mt-1.5 size-3 rounded-full", DOT_COLORS[item.kind])} />
                 {index < items.length - 1 ? <View className="w-px flex-1 bg-neutral-200" /> : null}
               </View>
               <Card className="mb-3 flex-1 flex-row items-start justify-between gap-2">

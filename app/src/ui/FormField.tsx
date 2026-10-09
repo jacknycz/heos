@@ -19,18 +19,25 @@ export type FormFieldProps<T extends FieldValues> = Omit<TextInputProps, "value"
 // Every text input in the app should be this, not a bare TextInput — label placement,
 // error display, and input styling all stay consistent, and validation comes from the
 // zod schema passed to useForm's resolver instead of being hand-rolled per screen.
-export function FormField<T extends FieldValues>({ control, name, label, className, labelClassName, disabled, voice, ...inputProps }: FormFieldProps<T>) {
+export function FormField<T extends FieldValues>({
+  control,
+  name,
+  label,
+  className,
+  labelClassName,
+  disabled,
+  voice,
+  ...inputProps
+}: FormFieldProps<T>) {
   const { field, fieldState } = useController({ control, name });
 
   return (
     <View className={clsx("gap-1.5", disabled && "opacity-50")}>
       <View className="flex-row items-center justify-between">
-        <Text variant="label" className={labelClassName}>{label}</Text>
-        {voice ? (
-          <VoiceInputButton
-            onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`.trim() : text)}
-          />
-        ) : null}
+        <Text variant="label" className={labelClassName}>
+          {label}
+        </Text>
+        {voice ? <VoiceInputButton onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`.trim() : text)} /> : null}
       </View>
       <TextInput
         value={typeof field.value === "string" ? field.value : (field.value ?? "")}

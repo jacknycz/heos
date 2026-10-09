@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Pressable, View } from "react-native";
+import { Modal, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "./Text";
 import { primary, neutral } from "../theme/palette";
@@ -40,9 +40,11 @@ export function Dropdown({
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setOpen(false)}>
           <Pressable className="gap-1 rounded-t-card bg-white p-2 pb-6 dark:bg-neutral-900" onPress={(e) => e.stopPropagation()}>
-            <Text variant="label" className="px-3 py-2">{label}</Text>
+            <Text variant="label" className="px-3 py-2">
+              {label}
+            </Text>
             <Pressable
-              className="flex-row items-center justify-between rounded-card px-3 py-3 active:bg-neutral-100 dark:active:bg-neutral-800"
+              className="flex-row items-center justify-between rounded-card p-3 active:bg-neutral-100 dark:active:bg-neutral-800"
               onPress={() => {
                 onChange("");
                 setOpen(false);
@@ -54,7 +56,7 @@ export function Dropdown({
             {options.map((opt) => (
               <Pressable
                 key={opt.value}
-                className="flex-row items-center justify-between rounded-card px-3 py-3 active:bg-neutral-100 dark:active:bg-neutral-800"
+                className="flex-row items-center justify-between rounded-card p-3 active:bg-neutral-100 dark:active:bg-neutral-800"
                 onPress={() => {
                   onChange(opt.value);
                   setOpen(false);

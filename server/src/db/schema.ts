@@ -2,7 +2,10 @@
 import { pgTable, text, integer, real, boolean, timestamp, date } from "drizzle-orm/pg-core";
 import { createId } from "@paralleldrive/cuid2";
 
-const id = () => text("id").primaryKey().$defaultFn(() => createId());
+const id = () =>
+  text("id")
+    .primaryKey()
+    .$defaultFn(() => createId());
 const createdAt = () => timestamp("created_at").notNull().defaultNow();
 
 // The tenant boundary — every fleet's machines and users hang off one organization.
@@ -14,7 +17,9 @@ export const organizations = pgTable("organizations", {
 
 export const users = pgTable("users", {
   id: id(),
-  organizationId: text("organization_id").notNull().references(() => organizations.id),
+  organizationId: text("organization_id")
+    .notNull()
+    .references(() => organizations.id),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
@@ -30,10 +35,14 @@ export const users = pgTable("users", {
 // with a preset role, without needing email delivery or deep links.
 export const orgInvites = pgTable("org_invites", {
   id: id(),
-  organizationId: text("organization_id").notNull().references(() => organizations.id),
+  organizationId: text("organization_id")
+    .notNull()
+    .references(() => organizations.id),
   code: text("code").notNull().unique(),
   role: text("role", { enum: ["ADMIN", "MANAGER", "MECHANIC", "DRIVER"] }).notNull(),
-  createdByUserId: text("created_by_user_id").notNull().references(() => users.id),
+  createdByUserId: text("created_by_user_id")
+    .notNull()
+    .references(() => users.id),
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),
   usedByUserId: text("used_by_user_id").references(() => users.id),
@@ -44,7 +53,9 @@ export const orgInvites = pgTable("org_invites", {
 // free-text address only, no geocoding/maps).
 export const locations = pgTable("locations", {
   id: id(),
-  organizationId: text("organization_id").notNull().references(() => organizations.id),
+  organizationId: text("organization_id")
+    .notNull()
+    .references(() => organizations.id),
   name: text("name").notNull(),
   address: text("address"),
   createdAt: createdAt(),
@@ -53,7 +64,9 @@ export const locations = pgTable("locations", {
 // The digital passport: one row per machine, everything else hangs off it.
 export const machines = pgTable("machines", {
   id: id(),
-  organizationId: text("organization_id").notNull().references(() => organizations.id),
+  organizationId: text("organization_id")
+    .notNull()
+    .references(() => organizations.id),
   name: text("name").notNull(), // e.g. "Loader 4" — whatever the fleet calls it
   make: text("make"),
   model: text("model"),
@@ -68,7 +81,9 @@ export const machines = pgTable("machines", {
   locationId: text("location_id").references(() => locations.id, { onDelete: "set null" }),
   // Which reading milestones on this machine are measured in — a machine-level choice, not a
   // per-milestone one, since a machine only has one meter that matters (hour meter or odometer).
-  trackingUnit: text("tracking_unit", { enum: ["hours", "miles"] }).notNull().default("hours"),
+  trackingUnit: text("tracking_unit", { enum: ["hours", "miles"] })
+    .notNull()
+    .default("hours"),
   createdAt: createdAt(),
   // Bumped automatically on every update (see machines.ts's PATCH route) — now that a machine
   // can actually be edited, this is real activity for the dashboard's "recently edited
@@ -81,8 +96,12 @@ export const machines = pgTable("machines", {
 
 export const repairLogs = pgTable("repair_logs", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
-  mechanicId: text("mechanic_id").notNull().references(() => users.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
+  mechanicId: text("mechanic_id")
+    .notNull()
+    .references(() => users.id),
   description: text("description").notNull(),
   costCents: integer("cost_cents").notNull().default(0),
   createdAt: createdAt(),
@@ -90,8 +109,12 @@ export const repairLogs = pgTable("repair_logs", {
 
 export const driverNotes = pgTable("driver_notes", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
-  driverId: text("driver_id").notNull().references(() => users.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
+  driverId: text("driver_id")
+    .notNull()
+    .references(() => users.id),
   text: text("text").notNull(),
   resolved: boolean("resolved").notNull().default(false),
   createdAt: createdAt(),
@@ -99,8 +122,12 @@ export const driverNotes = pgTable("driver_notes", {
 
 export const hoursEntries = pgTable("hours_entries", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
-  enteredById: text("entered_by_id").notNull().references(() => users.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
+  enteredById: text("entered_by_id")
+    .notNull()
+    .references(() => users.id),
   hours: real("hours"),
   distance: real("distance"),
   recordedAt: createdAt(),
@@ -113,7 +140,9 @@ export const hoursEntries = pgTable("hours_entries", {
 // presence means "done" — see the due-date math in lib/machineContext.ts.
 export const milestones = pgTable("milestones", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
   label: text("label").notNull(),
   type: text("type", { enum: ["recurring", "one_time"] }).notNull(),
   thresholdValue: real("threshold_value").notNull(),
@@ -124,7 +153,9 @@ export const milestones = pgTable("milestones", {
 
 export const diagnosticEntries = pgTable("diagnostic_entries", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
   checklistName: text("checklist_name").notNull(),
   answers: text("answers").notNull(), // JSON-encoded checklist responses
   createdAt: createdAt(),
@@ -133,7 +164,9 @@ export const diagnosticEntries = pgTable("diagnostic_entries", {
 // Standalone parts/cost log — no in-app reordering yet (Phase 3), no supplier integration (Phase 4).
 export const parts = pgTable("parts", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
   repairLogId: text("repair_log_id").references(() => repairLogs.id),
   partNumber: text("part_number").notNull(),
   description: text("description"),
@@ -147,7 +180,9 @@ export const parts = pgTable("parts", {
 // here, rather than a single column, so each photo can be added/deleted independently.
 export const partReceipts = pgTable("part_receipts", {
   id: id(),
-  partId: text("part_id").notNull().references(() => parts.id),
+  partId: text("part_id")
+    .notNull()
+    .references(() => parts.id),
   // Base64 data URL, stored inline — no file/blob storage exists in this project yet (no S3, no
   // persistent volume on Railway), and this keeps it working identically in local dev and on
   // Railway with zero new infra. Fine for Phase 1 volumes; revisit if photo counts/sizes grow
@@ -159,14 +194,20 @@ export const partReceipts = pgTable("part_receipts", {
 // Per-machine AI chat, pre-loaded with passport context (Phase 1 scope).
 export const chatThreads = pgTable("chat_threads", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
-  userId: text("user_id").notNull().references(() => users.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
   createdAt: createdAt(),
 });
 
 export const chatMessages = pgTable("chat_messages", {
   id: id(),
-  threadId: text("thread_id").notNull().references(() => chatThreads.id),
+  threadId: text("thread_id")
+    .notNull()
+    .references(() => chatThreads.id),
   role: text("role", { enum: ["user", "assistant"] }).notNull(),
   content: text("content").notNull(),
   // set true once "add this update to the record" has turned this exchange into a real record
@@ -186,10 +227,16 @@ export const chatMessages = pgTable("chat_messages", {
 // can fetch it the same flat way as every other child table.
 export const chatSummaries = pgTable("chat_summaries", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
-  threadId: text("thread_id").notNull().references(() => chatThreads.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
+  threadId: text("thread_id")
+    .notNull()
+    .references(() => chatThreads.id),
   summary: text("summary").notNull(),
-  coveredThroughMessageId: text("covered_through_message_id").notNull().references(() => chatMessages.id),
+  coveredThroughMessageId: text("covered_through_message_id")
+    .notNull()
+    .references(() => chatMessages.id),
   createdAt: createdAt(),
 });
 
@@ -197,8 +244,12 @@ export const chatSummaries = pgTable("chat_summaries", {
 // message text as-is for now; a later pass may turn these into structured repair logs.
 export const aiLogs = pgTable("ai_logs", {
   id: id(),
-  machineId: text("machine_id").notNull().references(() => machines.id),
-  sourceMessageId: text("source_message_id").notNull().references(() => chatMessages.id),
+  machineId: text("machine_id")
+    .notNull()
+    .references(() => machines.id),
+  sourceMessageId: text("source_message_id")
+    .notNull()
+    .references(() => chatMessages.id),
   content: text("content").notNull(),
   createdAt: createdAt(),
 });

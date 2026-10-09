@@ -45,17 +45,8 @@ export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps)
             accessibilityState={focused ? { selected: true } : {}}
             className="flex-1 items-center justify-center gap-1 py-2"
           >
-            {icon && (
-              <Ionicons
-                name={focused ? icon.active : icon.inactive}
-                size={22}
-                color={focused ? primary[600] : neutral[500]}
-              />
-            )}
-            <Text
-              variant="label"
-              className={clsx("text-xs", focused ? "font-semibold text-primary-600" : "font-normal text-neutral-500")}
-            >
+            {icon && <Ionicons name={focused ? icon.active : icon.inactive} size={22} color={focused ? primary[600] : neutral[500]} />}
+            <Text variant="label" className={clsx("text-xs", focused ? "font-semibold text-primary-600" : "font-normal text-neutral-500")}>
               {options.title ?? route.name}
             </Text>
           </Pressable>

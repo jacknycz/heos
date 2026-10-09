@@ -32,7 +32,9 @@ without checking scope first.
   `industrial`), `Tabs` (`text` or `icon` variant), `Sheet`, `Accordion`, `Badge`, `Text` variants.
   A new variant belongs in the shared component, not on one screen.
 - **No conflicting Tailwind classes.** Don't put two classes from the same family in one string
-  (two `bg-*`, two border widths, two text sizes). Let the component's variant own them.
+  (two `bg-*`, two border widths, two text sizes). Let the component's variant own them. `npm run
+  lint` catches this (`tailwindcss/no-contradicting-classname`) — it's a real error, not a style
+  nit.
 - **The `/design` page is the visual reference.** Add new components there.
 - **Dark mode is manual** (`darkMode: "class"`), toggled in Settings and on `/design`. Every
   color needs a `dark:` pair, or a palette value that works in both.
@@ -73,8 +75,14 @@ truncate the shared local test data without asking.
 
 ## Working conventions
 
-- Verify with `npx tsc --noEmit` in `app/` (and `server/`) and a bundle rebuild before reporting
-  a change as done. Say plainly what you could not check, such as native rendering.
+- Verify with `npm run typecheck` (app) / `npx tsc --noEmit` (server), `npm run lint`, and a
+  bundle rebuild before reporting a change as done, in both `app/` and `server/`. Say plainly what
+  you could not check, such as native rendering.
+- `npm run format` (Prettier, with `prettier-plugin-tailwindcss` for class ordering) before
+  committing. `npm run lint:fix` / `npm run format:check` also exist in both projects.
+- `tsconfig.json` has `noUnusedLocals`/`noUnusedParameters` on in both projects — an unused
+  import or parameter is a type error, not just a lint warning. Prefix an intentionally-unused
+  parameter with `_`.
 - Keep to the requested scope. This is a fixed-price project, so don't add features or
   restructure flows that weren't asked for.
 - Check with the user before deleting or reshaping an existing flow.
@@ -85,4 +93,3 @@ truncate the shared local test data without asking.
 - No user avatars or photos yet.
 - Native shadows and text glow still need a check on a device or simulator.
 - The dashboard intro is planned for a redesign.
-- The `/design` page doesn't yet show `Dropdown` or `SearchField`.

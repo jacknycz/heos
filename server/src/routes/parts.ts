@@ -81,9 +81,7 @@ partsRouter.delete("/:id/receipts/:receiptId", async (req, res) => {
     return res.status(404).json({ error: "not found" });
   }
 
-  await db
-    .delete(schema.partReceipts)
-    .where(and(eq(schema.partReceipts.id, req.params.receiptId), eq(schema.partReceipts.partId, part.id)));
+  await db.delete(schema.partReceipts).where(and(eq(schema.partReceipts.id, req.params.receiptId), eq(schema.partReceipts.partId, part.id)));
   res.status(204).send();
 });
 

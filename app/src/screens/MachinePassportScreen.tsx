@@ -101,7 +101,9 @@ export function MachinePassportScreen({ route, navigation }: Props) {
   };
 
   const refetch = useCallback(() => {
-    return apiGet<Passport>(`/machines/${machineId}`).then(setPassport).catch(() => {});
+    return apiGet<Passport>(`/machines/${machineId}`)
+      .then(setPassport)
+      .catch(() => {});
   }, [machineId]);
 
   // Re-fetch on every focus, not just on mount — each logging form navigates back here on

@@ -21,8 +21,12 @@ export function MachineListScreen({ navigation }: Props) {
   // as the passport screen).
   useFocusEffect(
     useCallback(() => {
-      apiGet<Machine[]>("/machines").then(setMachines).catch(() => {});
-      apiGet<Location[]>("/locations").then(setLocations).catch(() => {});
+      apiGet<Machine[]>("/machines")
+        .then(setMachines)
+        .catch(() => {});
+      apiGet<Location[]>("/locations")
+        .then(setLocations)
+        .catch(() => {});
     }, []),
   );
 
@@ -57,10 +61,7 @@ export function MachineListScreen({ navigation }: Props) {
           )
         }
         renderItem={({ item }) => (
-          <Pressable
-            className="py-4 active:opacity-60"
-            onPress={() => navigation.navigate("MachinePassport", { machineId: item.id })}
-          >
+          <Pressable className="py-4 active:opacity-60" onPress={() => navigation.navigate("MachinePassport", { machineId: item.id })}>
             <Text variant="heading">{item.name}</Text>
             <Text variant="muted">
               {[item.make, item.model].filter(Boolean).join(" ")}

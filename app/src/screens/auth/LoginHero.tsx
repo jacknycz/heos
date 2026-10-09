@@ -1,15 +1,7 @@
 import { useEffect } from "react";
 import { View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  Easing,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming } from "react-native-reanimated";
 import { primary, neutral, white } from "../../theme/palette";
 
 // A handful of soft dust motes drifting slowly upward through the glow — kept to five, small,
@@ -36,10 +28,7 @@ function Mote({ left, size, delay, duration }: (typeof MOTES)[number]) {
 
   return (
     <Animated.View
-      style={[
-        style,
-        { position: "absolute", bottom: "20%", left, width: size, height: size, borderRadius: size / 2, backgroundColor: white },
-      ]}
+      style={[style, { position: "absolute", bottom: "20%", left, width: size, height: size, borderRadius: size / 2, backgroundColor: white }]}
     />
   );
 }
@@ -76,10 +65,7 @@ function PulsingCircle({
   const offset = (containerSize - size) / 2;
   return (
     <Animated.View
-      style={[
-        style,
-        { position: "absolute", top: offset, left: offset, width: size, height: size, borderRadius: size / 2, backgroundColor: color },
-      ]}
+      style={[style, { position: "absolute", top: offset, left: offset, width: size, height: size, borderRadius: size / 2, backgroundColor: color }]}
     />
   );
 }

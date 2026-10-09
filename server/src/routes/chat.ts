@@ -43,10 +43,7 @@ chatRouter.post("/threads", async (req, res) => {
   if (!(await assertMachineInOrg(parsed.data.machineId, req.user!.organizationId))) {
     return res.status(404).json({ error: "machine not found" });
   }
-  const [thread] = await db
-    .insert(schema.chatThreads)
-    .values({ machineId: parsed.data.machineId, userId: req.user!.id })
-    .returning();
+  const [thread] = await db.insert(schema.chatThreads).values({ machineId: parsed.data.machineId, userId: req.user!.id }).returning();
   res.status(201).json(thread);
 });
 
@@ -88,10 +85,7 @@ chatRouter.post("/threads/:id/messages", async (req, res) => {
     return res.status(502).json({ error: "chat assistant is unavailable right now", userMessage });
   }
 
-  const [assistantMessage] = await db
-    .insert(schema.chatMessages)
-    .values({ threadId: thread.id, role: "assistant", content: reply })
-    .returning();
+  const [assistantMessage] = await db.insert(schema.chatMessages).values({ threadId: thread.id, role: "assistant", content: reply }).returning();
 
   res.status(201).json([userMessage, assistantMessage]);
 });
@@ -178,11 +172,7 @@ chatRouter.post("/messages/:id/add-to-record", async (req, res) => {
     return res.status(404).json({ error: "not found" });
   }
 
-  const [message] = await db
-    .update(schema.chatMessages)
-    .set({ addedToRecord: true })
-    .where(eq(schema.chatMessages.id, req.params.id))
-    .returning();
+  const [message] = await db.update(schema.chatMessages).set({ addedToRecord: true }).where(eq(schema.chatMessages.id, req.params.id)).returning();
   // Saved as-is for now; a later pass may extract structured repair logs from it.
   await db.insert(schema.aiLogs).values({ machineId: row.machineId, sourceMessageId: message.id, content: message.content });
   res.json(message);

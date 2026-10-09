@@ -56,24 +56,25 @@ export function DashboardScreen({ navigation }: Props) {
   const [repeatOrders, setRepeatOrders] = useState<RepeatOrder[]>([]);
   const [machines, setMachines] = useState<Machine[]>([]);
   const { height } = useWindowDimensions();
-  const openMilestones = (m: Machine) =>
-    navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } });
+  const openMilestones = (m: Machine) => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } });
 
   // Re-fetch on every focus, not just on mount — bottom-tab screens stay mounted after the
   // first visit, so a mount-only effect would never see a machine edit made in another tab
   // (e.g. renaming a machine from its passport) until a full app reload.
   useFocusEffect(
     useCallback(() => {
-      apiGet<RepeatOrder[]>("/parts/repeat-orders").then(setRepeatOrders).catch(() => {});
-      apiGet<Machine[]>("/machines").then(setMachines).catch(() => {});
+      apiGet<RepeatOrder[]>("/parts/repeat-orders")
+        .then(setRepeatOrders)
+        .catch(() => {});
+      apiGet<Machine[]>("/machines")
+        .then(setMachines)
+        .catch(() => {});
     }, []),
   );
 
   // lastActivityAt (from the server) is the greater of the machine's own updatedAt (bumped on
   // every edit) and the latest timestamp across everything logged against it.
-  const recentMachines = [...machines]
-    .sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime())
-    .slice(0, 3);
+  const recentMachines = [...machines].sort((a, b) => new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime()).slice(0, 3);
   const machinesWithDueMilestones = machines.filter((m) => m.dueMilestonesCount > 0);
   // Excludes machines already in the due list above — once something's overdue it belongs in
   // that more urgent card, not duplicated down here too.
@@ -132,10 +133,7 @@ export function DashboardScreen({ navigation }: Props) {
         ) : (
           <View className="gap-2">
             {recentMachines.map((m) => (
-              <Pressable
-                key={m.id}
-                onPress={() => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } })}
-              >
+              <Pressable key={m.id} onPress={() => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } })}>
                 <Card className="flex-row items-center justify-between">
                   <View>
                     <Text variant="heading">{m.name}</Text>

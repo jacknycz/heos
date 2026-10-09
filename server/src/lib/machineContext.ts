@@ -38,7 +38,11 @@ export async function getMachinePassport(machineId: string, organizationId: stri
     db.select().from(schema.repairLogs).where(eq(schema.repairLogs.machineId, machine.id)).orderBy(desc(schema.repairLogs.createdAt)),
     db.select().from(schema.driverNotes).where(eq(schema.driverNotes.machineId, machine.id)).orderBy(desc(schema.driverNotes.createdAt)),
     db.select().from(schema.hoursEntries).where(eq(schema.hoursEntries.machineId, machine.id)).orderBy(desc(schema.hoursEntries.recordedAt)),
-    db.select().from(schema.diagnosticEntries).where(eq(schema.diagnosticEntries.machineId, machine.id)).orderBy(desc(schema.diagnosticEntries.createdAt)),
+    db
+      .select()
+      .from(schema.diagnosticEntries)
+      .where(eq(schema.diagnosticEntries.machineId, machine.id))
+      .orderBy(desc(schema.diagnosticEntries.createdAt)),
     db.select().from(schema.parts).where(eq(schema.parts.machineId, machine.id)).orderBy(desc(schema.parts.orderedAt)),
     db.select().from(schema.milestones).where(eq(schema.milestones.machineId, machine.id)).orderBy(desc(schema.milestones.createdAt)),
     db.select().from(schema.chatSummaries).where(eq(schema.chatSummaries.machineId, machine.id)).orderBy(desc(schema.chatSummaries.createdAt)),
@@ -61,7 +65,19 @@ export async function getMachinePassport(machineId: string, organizationId: stri
   const currentTrackingValue = latestEntry ? (machine.trackingUnit === "hours" ? latestEntry.hours : latestEntry.distance) : null;
   const milestones = milestoneRows.map((m) => evaluateMilestone(m, currentTrackingValue));
 
-  return { ...machine, location, repairLogs, driverNotes, hoursEntries, diagnosticEntries, parts, milestones, chatSummaries, aiLogs: aiLogRows, currentTrackingValue };
+  return {
+    ...machine,
+    location,
+    repairLogs,
+    driverNotes,
+    hoursEntries,
+    diagnosticEntries,
+    parts,
+    milestones,
+    chatSummaries,
+    aiLogs: aiLogRows,
+    currentTrackingValue,
+  };
 }
 
 // Flattens a passport into the system-prompt text the chat assistant is primed with.

@@ -59,12 +59,12 @@ export function ReceiptsField({
           {items.map((item, index) => (
             <View key={item.id ?? `pending-${index}`} className="relative">
               <Pressable onPress={() => setPreview(item.image)}>
-                <Image source={{ uri: item.image }} className="h-16 w-16 rounded-card border border-neutral-300 dark:border-neutral-700" />
+                <Image source={{ uri: item.image }} className="size-16 rounded-card border border-neutral-300 dark:border-neutral-700" />
               </Pressable>
               <Pressable
                 onPress={() => setPendingDelete(item)}
                 hitSlop={8}
-                className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-danger-600"
+                className="absolute -right-2 -top-2 size-6 items-center justify-center rounded-full bg-danger-600"
               >
                 <Ionicons name="close" size={14} color={white} />
               </Pressable>

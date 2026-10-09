@@ -34,14 +34,7 @@ export function LoginScreen({ navigation }: Props) {
           <LoginLogo />
         </View>
         {formState.errors.root ? <Text className="text-danger-200">{formState.errors.root.message}</Text> : null}
-        <FormField
-          control={control}
-          name="email"
-          label="Email"
-          labelClassName="text-white"
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
+        <FormField control={control} name="email" label="Email" labelClassName="text-white" autoCapitalize="none" keyboardType="email-address" />
         <FormField control={control} name="password" label="Password" labelClassName="text-white" secureTextEntry />
         <Button title="Log in" variant="fancy" className="mt-4" onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
         <View className="mt-4 gap-2">
@@ -51,12 +44,7 @@ export function LoginScreen({ navigation }: Props) {
             textClassName="text-white"
             onPress={() => navigation.navigate("CreateOrganization")}
           />
-          <Button
-            title="I have an invite code"
-            variant="ghost"
-            textClassName="text-white"
-            onPress={() => navigation.navigate("AcceptInvite")}
-          />
+          <Button title="I have an invite code" variant="ghost" textClassName="text-white" onPress={() => navigation.navigate("AcceptInvite")} />
         </View>
       </View>
     </Screen>

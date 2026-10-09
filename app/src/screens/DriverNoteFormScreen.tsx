@@ -11,15 +11,7 @@ type DriverNote = { id: string; text: string };
 
 // The driver-note form itself. Used both in the passport's sheet (new notes) and by the full-screen
 // route below (editing a note from History).
-export function DriverNoteForm({
-  machineId,
-  driverNote,
-  onDone,
-}: {
-  machineId: string;
-  driverNote?: DriverNote;
-  onDone: () => void;
-}) {
+export function DriverNoteForm({ machineId, driverNote, onDone }: { machineId: string; driverNote?: DriverNote; onDone: () => void }) {
   const { control, handleSubmit, formState, setError } = useForm<DriverNoteFormValues>({
     resolver: zodResolver(driverNoteSchema),
     defaultValues: { text: driverNote?.text ?? "" },

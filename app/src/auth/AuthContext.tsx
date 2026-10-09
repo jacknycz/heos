@@ -47,9 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Registers this device's push token whenever a user becomes signed in — covers login,
-  // signup, invite-accept, and a restored session on app launch, all in one place.
+  // signup, invite-accept, and a restored session on app launch, all in one place. Depends on
+  // user?.id specifically (not the whole user object) so re-fetching /auth/me — which returns a
+  // new object with the same id — doesn't re-register the push token on every refresh.
   useEffect(() => {
     if (user) registerForPushNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   async function login(email: string, password: string) {
@@ -83,11 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, signupOrganization, acceptInvite, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, loading, login, signupOrganization, acceptInvite, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

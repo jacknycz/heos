@@ -111,10 +111,12 @@ export function DesignSystemScreen() {
         <View className="gap-3">
           {PALETTE.map((group) => (
             <View key={group.name} className="gap-1.5">
-              <Text variant="label" className="capitalize">{group.name}</Text>
+              <Text variant="label" className="capitalize">
+                {group.name}
+              </Text>
               <View className="flex-row gap-2">
                 {group.classes.map((cls) => (
-                  <View key={cls} className={clsx("h-10 w-10 rounded-card border border-neutral-200 dark:border-neutral-800", cls)} />
+                  <View key={cls} className={clsx("size-10 rounded-card border border-neutral-200 dark:border-neutral-800", cls)} />
                 ))}
               </View>
             </View>
@@ -228,11 +230,7 @@ export function DesignSystemScreen() {
         <PriceField control={control} name="price" label="Price" />
         <SelectField control={control} name="role" label="Role" options={ROLE_OPTIONS} />
         <CheckboxField control={control} name="agree" label="I agree to the terms" />
-        <Button
-          variant="secondary"
-          title="Validate (show errors)"
-          onPress={handleSubmit(() => {})}
-        />
+        <Button variant="secondary" title="Validate (show errors)" onPress={handleSubmit(() => {})} />
       </Section>
 
       <Section title="Receipts field">

@@ -111,7 +111,9 @@ export function ChatTab({ machineId, onSummarySaved }: { machineId: string; onSu
               </View>
               {item.role === "assistant" ? (
                 item.addedToRecord ? (
-                  <Text variant="muted" className="text-xs">Added to record</Text>
+                  <Text variant="muted" className="text-xs">
+                    Added to record
+                  </Text>
                 ) : (
                   <Button size="sm" variant="ghost" title="Add this update to the record" onPress={() => addToRecord(item.id)} />
                 )

@@ -1,12 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
-import Animated, {
-  interpolate,
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { interpolate, interpolateColor, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "nativewind";
 import clsx from "clsx";
@@ -103,9 +97,7 @@ export function Accordion({
         }
       : {},
   );
-  const titleStyle = useAnimatedStyle(() =>
-    solidColor ? { color: interpolateColor(progress.value, [0, 1], [white, expandedTitle]) } : {},
-  );
+  const titleStyle = useAnimatedStyle(() => (solidColor ? { color: interpolateColor(progress.value, [0, 1], [white, expandedTitle]) } : {}));
   const chevronStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${progress.value * 180}deg` }] }));
   const bodyStyle = useAnimatedStyle(() => ({
     height: interpolate(progress.value, [0, 1], [0, contentHeight.value]),

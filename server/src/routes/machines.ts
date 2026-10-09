@@ -17,11 +17,26 @@ async function getLastActivityByMachine(machineIds: string[]) {
   if (machineIds.length === 0) return lastActivity;
 
   const [repairLogs, driverNotes, hoursEntries, diagnosticEntries, parts, milestoneCompletions] = await Promise.all([
-    db.select({ machineId: schema.repairLogs.machineId, ts: schema.repairLogs.createdAt }).from(schema.repairLogs).where(inArray(schema.repairLogs.machineId, machineIds)),
-    db.select({ machineId: schema.driverNotes.machineId, ts: schema.driverNotes.createdAt }).from(schema.driverNotes).where(inArray(schema.driverNotes.machineId, machineIds)),
-    db.select({ machineId: schema.hoursEntries.machineId, ts: schema.hoursEntries.recordedAt }).from(schema.hoursEntries).where(inArray(schema.hoursEntries.machineId, machineIds)),
-    db.select({ machineId: schema.diagnosticEntries.machineId, ts: schema.diagnosticEntries.createdAt }).from(schema.diagnosticEntries).where(inArray(schema.diagnosticEntries.machineId, machineIds)),
-    db.select({ machineId: schema.parts.machineId, ts: schema.parts.orderedAt }).from(schema.parts).where(inArray(schema.parts.machineId, machineIds)),
+    db
+      .select({ machineId: schema.repairLogs.machineId, ts: schema.repairLogs.createdAt })
+      .from(schema.repairLogs)
+      .where(inArray(schema.repairLogs.machineId, machineIds)),
+    db
+      .select({ machineId: schema.driverNotes.machineId, ts: schema.driverNotes.createdAt })
+      .from(schema.driverNotes)
+      .where(inArray(schema.driverNotes.machineId, machineIds)),
+    db
+      .select({ machineId: schema.hoursEntries.machineId, ts: schema.hoursEntries.recordedAt })
+      .from(schema.hoursEntries)
+      .where(inArray(schema.hoursEntries.machineId, machineIds)),
+    db
+      .select({ machineId: schema.diagnosticEntries.machineId, ts: schema.diagnosticEntries.createdAt })
+      .from(schema.diagnosticEntries)
+      .where(inArray(schema.diagnosticEntries.machineId, machineIds)),
+    db
+      .select({ machineId: schema.parts.machineId, ts: schema.parts.orderedAt })
+      .from(schema.parts)
+      .where(inArray(schema.parts.machineId, machineIds)),
     db
       .select({ machineId: schema.milestones.machineId, ts: schema.milestones.lastCompletedAt })
       .from(schema.milestones)
@@ -122,7 +137,10 @@ const createSchema = z.object({
   engineNumber: z.string().optional(),
   fleetNumber: z.string().optional(),
   registrationNumber: z.string().optional(),
-  registrationExpiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD").optional(),
+  registrationExpiresAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+    .optional(),
   // nullable (not just optional) so a PATCH can explicitly clear an already-assigned location —
   // omitting the key means "leave unchanged" below, same as every other field here.
   locationId: z.string().nullable().optional(),

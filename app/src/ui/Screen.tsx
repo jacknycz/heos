@@ -39,13 +39,7 @@ export function Screen({
 
   return (
     <SafeAreaView edges={edges} className={clsx("flex-1", BACKGROUND_CLASSES[background])}>
-      {topGradient ? (
-        <LinearGradient
-          colors={[primary[500], fadeTo, fadeTo]}
-          locations={[0, 0.3, 1]}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : null}
+      {topGradient ? <LinearGradient colors={[primary[500], fadeTo, fadeTo]} locations={[0, 0.3, 1]} style={StyleSheet.absoluteFill} /> : null}
       {scroll ? (
         <ScrollView className="flex-1" contentContainerClassName={clsx(padded && "gap-6 p-4", className)} {...(props as object)}>
           {children}

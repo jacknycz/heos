@@ -79,9 +79,7 @@ export function MachineFormScreen({ route, navigation }: Props) {
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
       <FormField control={control} name="name" label="Name" placeholder="e.g. Loader 4" />
       <SelectField control={control} name="manufacturer" label="Manufacturer" options={MANUFACTURER_OPTIONS} />
-      {manufacturer === "Custom" ? (
-        <FormField control={control} name="customManufacturer" label="Manufacturer name" />
-      ) : null}
+      {manufacturer === "Custom" ? <FormField control={control} name="customManufacturer" label="Manufacturer name" /> : null}
       <FormField control={control} name="model" label="Model" placeholder="e.g. 950M" />
       <FormField control={control} name="year" label="Year" keyboardType="number-pad" placeholder="e.g. 2019" />
       <FormField control={control} name="serialOrVin" label="Serial / VIN" />

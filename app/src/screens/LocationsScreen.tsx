@@ -19,10 +19,16 @@ export function LocationsScreen({ navigation }: Props) {
   const [pendingDelete, setPendingDelete] = useState<Location | null>(null);
 
   const load = useCallback(() => {
-    apiGet<Location[]>("/locations").then(setLocations).catch((err) => setError(err.message));
+    apiGet<Location[]>("/locations")
+      .then(setLocations)
+      .catch((err) => setError(err.message));
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   async function confirmDelete() {
     if (!pendingDelete) return;

@@ -32,9 +32,7 @@ export function SettingsScreen({ navigation }: Props) {
         <Tabs tabs={THEME_TABS} activeKey={colorScheme} onChange={(key) => setColorScheme(key as AppColorScheme)} />
       </Card>
       {user?.role === "ADMIN" ? <Button title="Manage Team" variant="secondary" onPress={() => navigation.navigate("Team")} /> : null}
-      {user?.role === "ADMIN" ? (
-        <Button title="Manage Locations" variant="secondary" onPress={() => navigation.navigate("Locations")} />
-      ) : null}
+      {user?.role === "ADMIN" ? <Button title="Manage Locations" variant="secondary" onPress={() => navigation.navigate("Locations")} /> : null}
       <Button title="Log out" variant="danger" onPress={logout} />
     </Screen>
   );
