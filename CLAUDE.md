@@ -12,6 +12,11 @@ without checking scope first.
 
 ## Layout
 
+- Root `package.json` is orchestration only (scripts that fan out to `app/` and `server/`, plus
+  the husky pre-commit hook) — it has no app/server dependencies of its own. `app/` and `server/`
+  each keep a fully independent `node_modules`/`package-lock.json`: Railway deploys each as its
+  own service rooted at that subdirectory, so this is deliberately not an npm-workspaces monorepo
+  — hoisting dependencies to the root would break those per-service builds.
 - `server/`: Express + TypeScript + Drizzle ORM + Postgres. Routes in `server/src/routes`, shared
   helpers in `server/src/lib` (auth, machine context, milestones, OpenAI), schema in
   `server/src/db/schema.ts`.
@@ -62,6 +67,8 @@ organization. Invite codes let new users join an existing org.
 
 ## Running locally
 
+- First time (or after cloning fresh): `npm install` at the repo root too, not just `app/` and
+  `server/` — that's what wires up the husky pre-commit hook.
 - Postgres: the portable instance on port 5433 (`DATABASE_URL` in `server/.env`).
 - Server: `cd server && npm run db:migrate && npm run dev` (port 4000).
 - App: `cd app && npx expo start --port 8081`, then open `http://localhost:8081` for web.
@@ -75,11 +82,13 @@ truncate the shared local test data without asking.
 
 ## Working conventions
 
-- Verify with `npm run typecheck` (app) / `npx tsc --noEmit` (server), `npm run lint`, and a
-  bundle rebuild before reporting a change as done, in both `app/` and `server/`. Say plainly what
-  you could not check, such as native rendering.
-- `npm run format` (Prettier, with `prettier-plugin-tailwindcss` for class ordering) before
-  committing. `npm run lint:fix` / `npm run format:check` also exist in both projects.
+- From the repo root: `npm run verify` runs typecheck + lint + format:check across both `app/`
+  and `server/` in one command — this is also what the husky pre-commit hook runs on every
+  commit, so a commit that fails it never happened; fix with `npm run lint:fix` / `npm run format`
+  (root-level, or `--prefix app`/`--prefix server` for just one) and recommit.
+- Verify with `npm run verify` (or a bundle rebuild, for anything the lint/typecheck pass can't
+  catch) before reporting a change as done. Say plainly what you could not check, such as native
+  rendering.
 - `tsconfig.json` has `noUnusedLocals`/`noUnusedParameters` on in both projects — an unused
   import or parameter is a type error, not just a lint warning. Prefix an intentionally-unused
   parameter with `_`.

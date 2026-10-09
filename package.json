@@ -1,0 +1,17 @@
+{
+  "name": "heos",
+  "private": true,
+  "description": "Root orchestration only — app/ and server/ each keep their own independent node_modules and package-lock.json (Railway deploys each from its own subdirectory). This package.json exists to fan out shared commands and host the pre-commit hook, not to host app/server's own dependencies.",
+  "scripts": {
+    "typecheck": "npm run typecheck --prefix app && npm run typecheck --prefix server",
+    "lint": "npm run lint --prefix app && npm run lint --prefix server",
+    "lint:fix": "npm run lint:fix --prefix app && npm run lint:fix --prefix server",
+    "format": "npm run format --prefix app && npm run format --prefix server",
+    "format:check": "npm run format:check --prefix app && npm run format:check --prefix server",
+    "verify": "npm run typecheck && npm run lint && npm run format:check",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
