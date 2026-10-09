@@ -44,6 +44,7 @@
   },
   "devDependencies": {
     "@types/react": "~18.2.79",
+    "eas-cli": "^24.12.1",
     "eslint": "^8.57.0",
     "eslint-config-expo": "~7.1.2",
     "eslint-config-prettier": "^10.1.8",
