@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
 import { Text } from "./Text";
 import { shadows } from "../theme/shadows";
-import { neutral } from "../theme/palette";
+import { neutral, white } from "../theme/palette";
 
 export type TabItem = { key: string; label: string; icon?: keyof typeof Ionicons.glyphMap };
 
@@ -33,7 +33,7 @@ export function Tabs({
           >
             {variant === "icon" ? (
               <>
-                {tab.icon ? <Ionicons name={tab.icon} size={26} color={active ? "#fff" : neutral[500]} /> : null}
+                {tab.icon ? <Ionicons name={tab.icon} size={26} color={active ? white : neutral[500]} /> : null}
                 <Text
                   className={clsx(
                     "text-center text-xs font-semibold leading-none",

@@ -3,6 +3,7 @@ import { useController, type Control, type FieldValues, type Path } from "react-
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
 import { Text } from "./Text";
+import { white } from "../theme/palette";
 
 export type CheckboxFieldProps<T extends FieldValues> = {
   control: Control<T>;
@@ -29,7 +30,7 @@ export function CheckboxField<T extends FieldValues>({ control, name, label, dis
           checked ? "border-primary-600 bg-primary-600" : "border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-900",
         )}
       >
-        {checked ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+        {checked ? <Ionicons name="checkmark" size={14} color={white} /> : null}
       </View>
       <Text variant="body">{label}</Text>
     </Pressable>

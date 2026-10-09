@@ -11,6 +11,7 @@ import { DriverNoteForm } from "./DriverNoteFormScreen";
 import { HoursEntryForm } from "./HoursEntryForm";
 import { DiagnosticsForm } from "./DiagnosticsForm";
 import { shadows } from "../theme/shadows";
+import { white } from "../theme/palette";
 import { IdentityTab } from "./machinePassport/IdentityTab";
 import { HistoryTab } from "./machinePassport/HistoryTab";
 import { PartsCostTab } from "./machinePassport/PartsCostTab";
@@ -218,31 +219,31 @@ export function MachinePassportScreen({ route, navigation }: Props) {
         ) : null}
       </Screen>
 
-    <Pressable
-      onPress={() => setActiveSheet("chat")}
-      accessibilityRole="button"
-      accessibilityLabel="Ask about this machine"
-      className="items-center justify-center bg-primary-600"
-      style={[styles.fab, shadows.glow]}
-    >
-      <Ionicons name="chatbubble-ellipses" size={30} color="#fff" />
-    </Pressable>
+      <Pressable
+        onPress={() => setActiveSheet("chat")}
+        accessibilityRole="button"
+        accessibilityLabel="Ask about this machine"
+        className="items-center justify-center bg-primary-600"
+        style={[styles.fab, shadows.glow]}
+      >
+        <Ionicons name="chatbubble-ellipses" size={30} color={white} />
+      </Pressable>
 
-    <Sheet visible={activeSheet === "repair"} title="Log a Repair" onClose={closeSheet}>
-      <RepairLogForm machineId={machineId} onDone={finishSheet} />
-    </Sheet>
-    <Sheet visible={activeSheet === "note"} title="Driver Note" onClose={closeSheet}>
-      <DriverNoteForm machineId={machineId} onDone={finishSheet} />
-    </Sheet>
-    <Sheet visible={activeSheet === "hours"} title="Hours & Distance" onClose={closeSheet}>
-      <HoursEntryForm machineId={machineId} onDone={finishSheet} />
-    </Sheet>
-    <Sheet visible={activeSheet === "diagnostics"} title="Diagnostics" onClose={closeSheet}>
-      <DiagnosticsForm machineId={machineId} onDone={finishSheet} />
-    </Sheet>
-    <Sheet visible={activeSheet === "chat"} title="Ask about this machine" onClose={closeSheet}>
-      <ChatTab machineId={machineId} onSummarySaved={refetch} />
-    </Sheet>
+      <Sheet visible={activeSheet === "repair"} title="Log a Repair" onClose={closeSheet}>
+        <RepairLogForm machineId={machineId} onDone={finishSheet} />
+      </Sheet>
+      <Sheet visible={activeSheet === "note"} title="Driver Note" onClose={closeSheet}>
+        <DriverNoteForm machineId={machineId} onDone={finishSheet} />
+      </Sheet>
+      <Sheet visible={activeSheet === "hours"} title="Hours & Distance" onClose={closeSheet}>
+        <HoursEntryForm machineId={machineId} onDone={finishSheet} />
+      </Sheet>
+      <Sheet visible={activeSheet === "diagnostics"} title="Diagnostics" onClose={closeSheet}>
+        <DiagnosticsForm machineId={machineId} onDone={finishSheet} />
+      </Sheet>
+      <Sheet visible={activeSheet === "chat"} title="Ask about this machine" onClose={closeSheet}>
+        <ChatTab machineId={machineId} onSummarySaved={refetch} />
+      </Sheet>
     </View>
   );
 }

@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Button } from "./Button";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Text } from "./Text";
+import { white } from "../theme/palette";
 
 // id present = already persisted on the server; absent = picked this session, not saved yet
 // (only possible while creating a new part — there's nothing to attach an id to until it exists).
@@ -65,7 +66,7 @@ export function ReceiptsField({
                 hitSlop={8}
                 className="absolute -right-2 -top-2 h-6 w-6 items-center justify-center rounded-full bg-danger-600"
               >
-                <Ionicons name="close" size={14} color="#fff" />
+                <Ionicons name="close" size={14} color={white} />
               </Pressable>
             </View>
           ))}

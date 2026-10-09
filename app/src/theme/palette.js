@@ -26,4 +26,8 @@ module.exports = {
   neutral: colors.stone,
   danger: colors.red,
   warning: colors.yellow,
+  // Plain white, for icons/text sitting on a filled or colored surface regardless of light/dark
+  // mode — not part of the neutral scale (stone-50 isn't true white), so it needs its own token
+  // rather than another inlined "#fff".
+  white: "#ffffff",
 };

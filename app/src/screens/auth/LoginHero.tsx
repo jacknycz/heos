@@ -10,7 +10,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { primary, neutral } from "../../theme/palette";
+import { primary, neutral, white } from "../../theme/palette";
 
 // A handful of soft dust motes drifting slowly upward through the glow — kept to five, small,
 // and slow so it reads as atmosphere rather than a distraction.
@@ -38,7 +38,7 @@ function Mote({ left, size, delay, duration }: (typeof MOTES)[number]) {
     <Animated.View
       style={[
         style,
-        { position: "absolute", bottom: "20%", left, width: size, height: size, borderRadius: size / 2, backgroundColor: "#fff" },
+        { position: "absolute", bottom: "20%", left, width: size, height: size, borderRadius: size / 2, backgroundColor: white },
       ]}
     />
   );
@@ -91,7 +91,7 @@ function SunGlow() {
     <View style={{ position: "absolute", top: "50%", left: "50%", marginTop: -160, marginLeft: -160, width: 320, height: 320 }}>
       <PulsingCircle containerSize={320} size={320} color={primary[200]} opacity={0.14} duration={4800} />
       <PulsingCircle containerSize={320} size={220} color={primary[100]} opacity={0.2} duration={3900} delay={500} />
-      <PulsingCircle containerSize={320} size={120} color="#fff" opacity={0.28} duration={3200} delay={1000} />
+      <PulsingCircle containerSize={320} size={120} color={white} opacity={0.28} duration={3200} delay={1000} />
     </View>
   );
 }

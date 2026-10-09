@@ -9,13 +9,14 @@ import { AuthStack } from "./src/navigation/AuthStack";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { DesignSystemScreen } from "./src/screens/DesignSystemScreen";
 import { applyStoredColorScheme } from "./src/theme/colorScheme";
+import { primary } from "./src/theme/palette";
 
 function Gate() {
   const { user, loading } = useAuth();
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
-        <ActivityIndicator color="#2563eb" />
+        <ActivityIndicator color={primary[600]} />
       </View>
     );
   }
@@ -27,8 +28,8 @@ export default function App() {
     applyStoredColorScheme();
   }, []);
 
-  // Component-kit reference, reachable at /design on web — no auth gate yet (see TODO
-  // to password-protect it), so it's checked before AuthProvider/NavigationContainer.
+  // Component-kit reference, reachable at /design on web — not password-protected yet
+  // (see the banner on the page itself), so it's checked before AuthProvider/NavigationContainer.
   // Normally a navigator (bottom-tabs/native-stack) supplies SafeAreaProviderCompat for
   // Screen's SafeAreaView; outside any navigator here, it needs its own provider.
   if (Platform.OS === "web" && window.location.pathname.startsWith("/design")) {

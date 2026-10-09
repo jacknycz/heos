@@ -21,6 +21,10 @@ import {
   Accordion,
   Tabs,
   QuickActions,
+  Dropdown,
+  SearchField,
+  Sheet,
+  VoiceInputButton,
 } from "../ui";
 import { usePersistedColorScheme, type AppColorScheme } from "../theme/colorScheme";
 
@@ -80,6 +84,10 @@ export function DesignSystemScreen() {
   const [activeTab, setActiveTab] = useState("one");
   const [iconTab, setIconTab] = useState("fleet");
   const [lastAction, setLastAction] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterLocation, setFilterLocation] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [transcript, setTranscript] = useState("");
 
   return (
     <Screen scroll>
@@ -233,6 +241,40 @@ export function DesignSystemScreen() {
           onAdd={(image) => setReceipts((prev) => [...prev, { image }])}
           onRemove={(item) => setReceipts((prev) => prev.filter((i) => i !== item))}
         />
+      </Section>
+
+      <Section title="Search field">
+        <SearchField value={search} onChangeText={setSearch} placeholder="Search machines…" />
+        <Text variant="muted">Plain value/onChange — for live filter bars, not react-hook-form.</Text>
+      </Section>
+
+      <Section title="Dropdown">
+        <Dropdown
+          label="Location"
+          value={filterLocation}
+          onChange={setFilterLocation}
+          options={[
+            { label: "Hardeeville Yard", value: "hardeeville" },
+            { label: "Savannah Yard", value: "savannah" },
+          ]}
+        />
+      </Section>
+
+      <Section title="Voice input">
+        <View className="gap-1.5">
+          <View className="flex-row items-center justify-between">
+            <Text variant="label">Dictate a note</Text>
+            <VoiceInputButton onTranscript={(text) => setTranscript((prev) => (prev ? `${prev} ${text}`.trim() : text))} />
+          </View>
+          <Text variant="muted">{transcript || "Tap the mic and speak — same affordance FormField's voice prop uses."}</Text>
+        </View>
+      </Section>
+
+      <Section title="Sheet">
+        <Button variant="secondary" title="Open a sheet" onPress={() => setSheetOpen(true)} />
+        <Sheet visible={sheetOpen} title="Example sheet" onClose={() => setSheetOpen(false)}>
+          <Text variant="muted">Slide-up panel used for quick actions and chat — content mounts fresh each time it opens.</Text>
+        </Sheet>
       </Section>
     </Screen>
   );

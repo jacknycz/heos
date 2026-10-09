@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useColorScheme } from "nativewind";
 import clsx from "clsx";
 import { Text } from "./Text";
-import { danger, neutral, warning } from "../theme/palette";
+import { danger, neutral, warning, white } from "../theme/palette";
 
 export type AccordionTone = "primary" | "neutral" | "success" | "warning" | "danger";
 
@@ -92,7 +92,7 @@ export function Accordion({
   const { border, bg, text } = TONES[tone];
 
   const solidColor = solid ? SOLID_COLORS[tone] : undefined;
-  const expandedSurface = dark ? neutral[900] : "#ffffff";
+  const expandedSurface = dark ? neutral[900] : white;
   const expandedTitle = dark ? neutral[50] : neutral[900];
 
   const cardStyle = useAnimatedStyle(() =>
@@ -104,7 +104,7 @@ export function Accordion({
       : {},
   );
   const titleStyle = useAnimatedStyle(() =>
-    solidColor ? { color: interpolateColor(progress.value, [0, 1], ["#ffffff", expandedTitle]) } : {},
+    solidColor ? { color: interpolateColor(progress.value, [0, 1], [white, expandedTitle]) } : {},
   );
   const chevronStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${progress.value * 180}deg` }] }));
   const bodyStyle = useAnimatedStyle(() => ({
@@ -112,7 +112,7 @@ export function Accordion({
     opacity: progress.value,
   }));
 
-  const iconColor = solid ? (expanded ? solidColor : "#ffffff") : neutral[400];
+  const iconColor = solid ? (expanded ? solidColor : white) : neutral[400];
 
   function toggle() {
     const next = !expanded;

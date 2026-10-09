@@ -4,3 +4,4 @@ export const primary: ColorScale;
 export const neutral: ColorScale;
 export const danger: ColorScale;
 export const warning: ColorScale;
+export const white: string;

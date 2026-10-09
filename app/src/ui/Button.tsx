@@ -1,7 +1,7 @@
 import { ActivityIndicator, Pressable, type PressableProps } from "react-native";
 import clsx from "clsx";
 import { Text } from "./Text";
-import { primary } from "../theme/palette";
+import { primary, white } from "../theme/palette";
 import { shadows } from "../theme/shadows";
 
 export type ButtonVariant = "primary" | "secondary" | "outline" | "danger" | "ghost" | "fancy" | "industrial";
@@ -69,7 +69,7 @@ export function Button({ title, variant = "primary", size = "md", loading, disab
       {...props}
     >
       {loading ? (
-        <ActivityIndicator color={filled ? "#fff" : primary[600]} />
+        <ActivityIndicator color={filled ? white : primary[600]} />
       ) : (
         <Text className={clsx(TEXT_VARIANTS[variant], TEXT_SIZES[size], textClassName)}>{title}</Text>
       )}
