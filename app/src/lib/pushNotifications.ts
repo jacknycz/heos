@@ -6,10 +6,9 @@ import { apiPatch } from "../api/client";
 // Called after login/session-restore so a milestone push (server-side, see
 // server/src/routes/hoursEntries.ts) actually has somewhere to land.
 //
-// No EAS project has been configured for this app yet (see README's hosting section, and
-// PROGRESS.md — distribution is still Expo Go/dev-only) — without a real projectId,
-// getExpoPushTokenAsync() throws. That's caught below so a missing EAS setup degrades to
-// "no push notifications" instead of breaking login. Run `eas init` to get a real projectId.
+// getExpoPushTokenAsync() needs a real EAS projectId (set in app.json's extra.eas.projectId) and
+// throws without one, or if it can't reach Expo's push service — either way, caught below so that
+// degrades to "no push notifications" instead of breaking login.
 export async function registerForPushNotifications() {
   if (Platform.OS === "web") return; // no push support in the web preview build
 
