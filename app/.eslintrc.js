@@ -22,6 +22,15 @@ module.exports = {
     // Prettier (prettier-plugin-tailwindcss) owns class ordering on every format — no need
     // for lint to also flag it.
     "tailwindcss/classnames-order": "off",
+    // eslint-config-expo added React Compiler-awareness rules at SDK 56. This project doesn't
+    // run React Compiler (no babel plugin for it, not in scope here), so these are pure false
+    // positives against patterns that are actually correct for us: react-native-reanimated's
+    // SharedValue.value = ... is its documented mutation API (Accordion.tsx), not an accidental
+    // state mutation, and react-hook-form's watch() isn't memoizable by design — neither matters
+    // without the compiler actually running.
+    "react-hooks/immutability": "off",
+    "react-hooks/incompatible-library": "off",
+    "react-hooks/preserve-manual-memoization": "off",
   },
   overrides: [
     {

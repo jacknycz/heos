@@ -78,7 +78,7 @@ export function PartFormScreen({ route, navigation }: Props) {
       <FormField control={control} name="description" label="Description (optional)" />
       <PriceField control={control} name="cost" label="Cost" />
       <ReceiptsField items={receipts} onAdd={handleAddReceipt} onRemove={handleRemoveReceipt} />
-      <Button title={part ? "Save changes" : "Add Part"} onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
+      <Button title={part ? "Save changes" : "Add Part"} onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
     </Screen>
   );
 }

@@ -25,7 +25,8 @@
         }
       ],
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {

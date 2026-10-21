@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ScrollView, TextInput, View } from "react-native";
+import { ScrollView, TextInput, View, type ScrollViewInstance } from "react-native";
 import clsx from "clsx";
 import { apiGet, apiPost } from "../../api/client";
 import { Text, Button, EmptyState } from "../../ui";
@@ -27,7 +27,9 @@ export function ChatTab({ machineId, onSummarySaved }: { machineId: string; onSu
   const [sending, setSending] = useState(false);
   const [summarizing, setSummarizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const scrollRef = useRef<ScrollView>(null);
+  // react-native now exposes a dedicated instance type for refs, separate from the ScrollView
+  // component type itself (the component is forwardRef-wrapped, not a class).
+  const scrollRef = useRef<ScrollViewInstance>(null);
 
   useEffect(() => {
     apiGet<{ id: string; messages: Message[] } | null>(`/chat/threads?machineId=${machineId}`)

@@ -39,7 +39,7 @@ export function RepairLogForm({ machineId, repairLog, onDone }: { machineId: str
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
       <FormField control={control} name="description" label="What was done?" multiline numberOfLines={4} className="min-h-24" voice />
       <PriceField control={control} name="cost" label="Cost" />
-      <Button title={repairLog ? "Save changes" : "Save"} onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
+      <Button title={repairLog ? "Save changes" : "Save"} onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
     </ScrollView>
   );
 }
