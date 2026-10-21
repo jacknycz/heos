@@ -12,7 +12,7 @@ import { white } from "../theme/palette";
 export type ReceiptItem = { id?: string; image: string };
 
 const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
-  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  mediaTypes: ["images"],
   quality: 0.5, // keeps the base64 payload reasonable — this gets stored as a DB column, not a file
   base64: true,
 };

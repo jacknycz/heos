@@ -6,11 +6,9 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": false
-    },
-    "android": {
-      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"]
     },
     "plugins": [
       [
@@ -22,11 +20,12 @@
       ],
       "expo-notifications",
       [
-        "expo-av",
+        "expo-audio",
         {
           "microphonePermission": "HEOS uses your microphone to transcribe voice notes into repair logs and driver notes."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "eas": {
