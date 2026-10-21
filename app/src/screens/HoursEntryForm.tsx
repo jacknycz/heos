@@ -30,7 +30,7 @@ export function HoursEntryForm({ machineId, onDone }: { machineId: string; onDon
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
       <FormField control={control} name="hours" label="Hours" keyboardType="decimal-pad" />
       <FormField control={control} name="distance" label="Distance" keyboardType="decimal-pad" />
-      <Button title="Save" onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
+      <Button title="Save" onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
     </ScrollView>
   );
 }

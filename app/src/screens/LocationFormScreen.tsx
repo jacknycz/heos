@@ -34,7 +34,7 @@ export function LocationFormScreen({ route, navigation }: Props) {
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
       <FormField control={control} name="name" label="Name" placeholder="e.g. Main Yard" />
       <FormField control={control} name="address" label="Address (optional)" multiline numberOfLines={2} />
-      <Button title={location ? "Save changes" : "Add Location"} onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
+      <Button title={location ? "Save changes" : "Add Location"} onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
     </Screen>
   );
 }

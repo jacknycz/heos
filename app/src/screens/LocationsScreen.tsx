@@ -56,7 +56,7 @@ export function LocationsScreen({ navigation }: Props) {
         contentContainerClassName="gap-3 p-4"
         data={locations}
         keyExtractor={(l) => l.id}
-        ListHeaderComponent={error ? <Text className="mb-2 text-danger-600">{error}</Text> : null}
+        ListHeaderComponent={error ? <Text className="mb-2 text-danger-600">{error}</Text> : undefined}
         ListEmptyComponent={<EmptyState title="No locations yet" subtitle="Tap + above to add your first location." />}
         renderItem={({ item }) => (
           <Card className="gap-2">

@@ -113,7 +113,7 @@ export function MilestoneFormScreen({ route, navigation }: Props) {
           disabled={!!dueAt}
         />
       ) : null}
-      <Button title={milestone ? "Save changes" : "Add Milestone"} onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
+      <Button title={milestone ? "Save changes" : "Add Milestone"} onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
     </Screen>
   );
 }

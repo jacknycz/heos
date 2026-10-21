@@ -29,7 +29,7 @@ export function CreateOrganizationScreen() {
       <FormField control={control} name="name" label="Your name" />
       <FormField control={control} name="email" label="Email" autoCapitalize="none" keyboardType="email-address" />
       <FormField control={control} name="password" label="Password (min 8 characters)" secureTextEntry />
-      <Button title="Create organization" onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
+      <Button title="Create organization" onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
     </Screen>
   );
 }

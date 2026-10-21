@@ -89,7 +89,7 @@ export function MachineFormScreen({ route, navigation }: Props) {
       <FormField control={control} name="fleetNumber" label="Fleet number" />
       <FormField control={control} name="registrationNumber" label="Registration #" />
       <FormField control={control} name="registrationExpiresAt" label="Registration expiration" placeholder="YYYY-MM-DD" />
-      <Button title={machine ? "Save changes" : "Add Machine"} onPress={handleSubmit(onSubmit)} loading={formState.isSubmitting} />
+      <Button title={machine ? "Save changes" : "Add Machine"} onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
     </Screen>
   );
 }
