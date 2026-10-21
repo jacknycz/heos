@@ -1,6 +1,6 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ActivityIndicator, Platform, Pressable } from "react-native";
-import { Audio } from "expo-av";
+import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync } from "expo-audio";
 // expo-file-system's default export was rewritten at SDK 54 (new File/Directory class API);
 // /legacy keeps the readAsStringAsync/EncodingType shape this file already relies on.
 import * as FileSystem from "expo-file-system/legacy";
@@ -10,7 +10,7 @@ import { neutral, danger } from "../theme/palette";
 
 type Status = "idle" | "recording" | "transcribing";
 
-// expo-av gives back a native file:// URI on iOS/Android (readable via expo-file-system) but a
+// expo-audio gives back a native file:// URI on iOS/Android (readable via expo-file-system) but a
 // blob: URI on web, which expo-file-system can't read at all — that needs fetch + FileReader
 // instead. Returns a full data URL either way so the caller doesn't need to know the difference.
 async function recordingToDataUrl(uri: string): Promise<string> {
@@ -33,25 +33,24 @@ async function recordingToDataUrl(uri: string): Promise<string> {
 // web last time this was tried (see Accordion's icon handling for the same workaround).
 export function VoiceInputButton({ onTranscript }: { onTranscript: (text: string) => void }) {
   const [status, setStatus] = useState<Status>("idle");
-  const recordingRef = useRef<Audio.Recording | null>(null);
+  // useAudioRecorder is a hook, not an imperative constructor — one recorder instance per
+  // mounted button, reused across record/stop cycles. The hook owns disposing it on unmount.
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   async function startRecording() {
-    const permission = await Audio.requestPermissionsAsync();
+    const permission = await requestRecordingPermissionsAsync();
     if (!permission.granted) return;
-    await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-    const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-    recordingRef.current = recording;
+    await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+    await recorder.prepareToRecordAsync();
+    recorder.record();
     setStatus("recording");
   }
 
   async function stopRecording() {
-    const recording = recordingRef.current;
-    if (!recording) return;
-    recordingRef.current = null;
     setStatus("transcribing");
     try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
+      await recorder.stop();
+      const uri = recorder.uri;
       if (!uri) return;
       const audio = await recordingToDataUrl(uri);
       const { text } = await apiPost<{ text: string }>("/transcribe", { audio });

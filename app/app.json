@@ -9,9 +9,6 @@
     "ios": {
       "supportsTablet": false
     },
-    "android": {
-      "permissions": ["android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"]
-    },
     "plugins": [
       [
         "expo-image-picker",
@@ -22,11 +19,12 @@
       ],
       "expo-notifications",
       [
-        "expo-av",
+        "expo-audio",
         {
           "microphonePermission": "HEOS uses your microphone to transcribe voice notes into repair logs and driver notes."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "eas": {
