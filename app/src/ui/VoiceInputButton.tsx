@@ -1,7 +1,9 @@
 import { useRef, useState } from "react";
 import { ActivityIndicator, Platform, Pressable } from "react-native";
 import { Audio } from "expo-av";
-import * as FileSystem from "expo-file-system";
+// expo-file-system's default export was rewritten at SDK 54 (new File/Directory class API);
+// /legacy keeps the readAsStringAsync/EncodingType shape this file already relies on.
+import * as FileSystem from "expo-file-system/legacy";
 import { Ionicons } from "@expo/vector-icons";
 import { apiPost } from "../api/client";
 import { neutral, danger } from "../theme/palette";
