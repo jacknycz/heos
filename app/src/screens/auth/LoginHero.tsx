@@ -4,8 +4,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withDelay, withRepeat, withTiming } from "react-native-reanimated";
 import { primary, neutral, white } from "../../theme/palette";
 
-// A handful of soft dust motes drifting slowly upward through the glow — kept to five, small,
-// and slow so it reads as atmosphere rather than a distraction.
+// A handful of soft motes drifting slowly upward through the glow, like light filtering up
+// through a forest canopy — kept to five, small, and slow so it reads as atmosphere rather than
+// a distraction.
 const MOTES = [
   { left: "12%", size: 4, delay: 0, duration: 7000 },
   { left: "27%", size: 3, delay: 1400, duration: 6200 },
@@ -70,9 +71,10 @@ function PulsingCircle({
   );
 }
 
-// A slow breathing glow standing in for a rising sun — three concentric rings, warmest/brightest
-// at the center, each drifting in and out of phase with the others on its own slow cycle.
-function SunGlow() {
+// A slow breathing glow standing in for light through the evergreen canopy — three concentric
+// rings, brightest at the center, each drifting in and out of phase with the others on its own
+// slow cycle.
+function EvergreenGlow() {
   return (
     <View style={{ position: "absolute", top: "50%", left: "50%", marginTop: -160, marginLeft: -160, width: 320, height: 320 }}>
       <PulsingCircle containerSize={320} size={320} color={primary[200]} opacity={0.14} duration={4800} />
@@ -82,9 +84,9 @@ function SunGlow() {
   );
 }
 
-// Dawn breaking over the yard — sky gradient, a breathing sun glow centered on the screen, and a
-// few drifting dust motes. The whole point of a login screen for a fleet app: the workday's about
-// to start.
+// Morning light through the evergreens — a deep-to-sage gradient, a breathing glow centered on
+// the screen standing in for light through the canopy, and a few drifting motes. The whole point
+// of a login screen for a fleet app: the workday's about to start.
 export function LoginHero() {
   return (
     <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -93,7 +95,7 @@ export function LoginHero() {
         locations={[0, 0.35, 0.6, 0.8, 1]}
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
       />
-      <SunGlow />
+      <EvergreenGlow />
       {MOTES.map((mote) => (
         <Mote key={mote.left} {...mote} />
       ))}
