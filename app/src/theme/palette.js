@@ -5,18 +5,20 @@ const colors = require("tailwindcss/colors");
 // NativeWind's className/dark: system, so anywhere that needs a literal hex reads it from here
 // instead of a hand-copied string. tailwind.config.js requires this same file for its `primary`
 // scale, so the two can't drift apart — change a shade once, here.
+// Matches the Daly Organics logo: a muted sage-olive green for the badge, deepening toward the
+// near-black forest green of the pine silhouette and wordmark.
 const primary = {
-  50: "#fff6f0",
-  100: "#ffebdb",
-  200: "#ffd6b8",
-  300: "#ffb680",
-  400: "#ff931a",
-  500: "#ff6d00",
-  600: "#d65b00",
-  700: "#ad4a00",
-  800: "#8a3b00",
-  900: "#6b2e00",
-  950: "#421c00",
+  50: "#f5f6ef",
+  100: "#e7ebdb",
+  200: "#d1d8b9",
+  300: "#b2bf8d",
+  400: "#8e9c66",
+  500: "#6b7a4a",
+  600: "#55623c",
+  700: "#424c30",
+  800: "#333a26",
+  900: "#262b1c",
+  950: "#171a11",
 };
 
 module.exports = {
