@@ -12,7 +12,8 @@ type ScreenProps = ViewProps & {
   padded?: boolean;
   /** "grey" is the default content area; "white" is for screens that want to read as a plain page (e.g. the Dashboard intro). */
   background?: "grey" | "white";
-  /** Fades from primary-500 at the top to the interior grey by 30% down. Sits behind the content. */
+  /** Fades from primary at the top to the interior grey, sitting behind the content. Light mode
+   * only: starts darker (primary-700) and fades out further down (50%) than dark mode does. */
   topGradient?: boolean;
 };
 
@@ -35,11 +36,16 @@ export function Screen({
   ...props
 }: ScreenProps) {
   const { colorScheme } = useColorScheme();
-  const fadeTo = colorScheme === "dark" ? neutral[950] : neutral[100];
+  const dark = colorScheme === "dark";
+  const fadeTo = dark ? neutral[950] : neutral[100];
+  const gradientFrom = dark ? primary[500] : primary[700];
+  const gradientFadeLocation = dark ? 0.3 : 0.5;
 
   return (
     <SafeAreaView edges={edges} className={clsx("flex-1", BACKGROUND_CLASSES[background])}>
-      {topGradient ? <LinearGradient colors={[primary[500], fadeTo, fadeTo]} locations={[0, 0.3, 1]} style={StyleSheet.absoluteFill} /> : null}
+      {topGradient ? (
+        <LinearGradient colors={[gradientFrom, fadeTo, fadeTo]} locations={[0, gradientFadeLocation, 1]} style={StyleSheet.absoluteFill} />
+      ) : null}
       {scroll ? (
         <ScrollView className="flex-1" contentContainerClassName={clsx(padded && "gap-6 p-4", className)} {...(props as object)}>
           {children}
