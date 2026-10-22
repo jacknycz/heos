@@ -27,12 +27,14 @@ const CONTAINER_SIZES: Record<Size, string> = {
   sm: "px-3 py-2",
 };
 const TEXT_VARIANTS: Record<ButtonVariant, string> = {
-  primary: "text-white font-semibold",
-  secondary: "text-neutral-900 dark:text-neutral-50 font-semibold",
-  outline: "text-neutral-900 dark:text-neutral-50 font-semibold",
-  danger: "text-white font-semibold",
-  ghost: "text-primary-600 dark:text-primary-400 font-semibold",
-  fancy: "text-white font-semibold",
+  primary: "text-white font-medium",
+  secondary: "text-neutral-900 dark:text-neutral-50 font-medium",
+  outline: "text-neutral-900 dark:text-neutral-50 font-medium",
+  danger: "text-white font-medium",
+  ghost: "text-primary-600 dark:text-primary-400 font-medium",
+  fancy: "text-white font-medium",
+  // Deliberately heavier than the rest — the "physical push button" variant, kept bold/uppercase
+  // for its equipment-style identity rather than matched to the others.
   industrial: "text-white font-bold uppercase tracking-wider",
 };
 const TEXT_SIZES: Record<Size, string> = {

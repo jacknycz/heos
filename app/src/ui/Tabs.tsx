@@ -29,7 +29,7 @@ export function Tabs({
           <Pressable
             key={tab.key}
             onPress={() => onChange(tab.key)}
-            className={clsx("flex-1 items-center rounded-card py-2", active && "bg-primary-600")}
+            className={clsx("flex-1 items-center rounded-card py-2", active && "bg-primary-500")}
           >
             {variant === "icon" ? (
               <>

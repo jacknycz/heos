@@ -33,8 +33,10 @@ function toStyle(spec: ShadowSpec): ViewStyle {
 export const shadows = {
   // Small lift for cards sitting on a flat background.
   subtle: toStyle({ color: primary[950], offset: { width: 0, height: 2 }, opacity: 0.1, radius: 6, elevation: 2 }),
-  // Clear separation for panels and sheets.
-  raised: toStyle({ color: primary[950], offset: { width: 0, height: 6 }, opacity: 0.14, radius: 16, elevation: 6 }),
+  // Clear separation for panels and sheets. Only consumer is Button's industrial variant
+  // (Quick Actions) — depth cut 25% across the board (offset/opacity/radius/elevation) so it
+  // doesn't read heavier than the tabs/cards sitting next to it.
+  raised: toStyle({ color: primary[950], offset: { width: 0, height: 4.5 }, opacity: 0.105, radius: 12, elevation: 4.5 }),
   // Strongest lift, for things that should sit over everything else.
   floating: toStyle({ color: primary[950], offset: { width: 0, height: 10 }, opacity: 0.18, radius: 24, elevation: 12 }),
   // Brand-tinted glow for primary calls to action.
