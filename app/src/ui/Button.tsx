@@ -33,9 +33,7 @@ const TEXT_VARIANTS: Record<ButtonVariant, string> = {
   danger: "text-white font-medium",
   ghost: "text-primary-600 dark:text-primary-400 font-medium",
   fancy: "text-white font-medium",
-  // Deliberately heavier than the rest — the "physical push button" variant, kept bold/uppercase
-  // for its equipment-style identity rather than matched to the others.
-  industrial: "text-white font-bold uppercase tracking-wider",
+  industrial: "text-white font-medium uppercase tracking-wider",
 };
 const TEXT_SIZES: Record<Size, string> = {
   md: "text-base",
