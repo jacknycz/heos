@@ -48,9 +48,9 @@ const TRANSITION_MS = 220;
 
 // Solid mode animates through plain Animated components with style objects, not NativeWind
 // className, so the animated values reach the native/web style layer directly. Values mirror the
-// kit's tokens: rounded-card = 12, p-4 = 16, gap-2 = 8, text-base = 16 / font-semibold.
+// kit's tokens: rounded-card = 18, p-4 = 16, gap-2 = 8, text-base = 16 / font-semibold.
 const styles = StyleSheet.create({
-  card: { borderRadius: 12, borderWidth: 1, padding: 16 },
+  card: { borderRadius: 18, borderWidth: 1, padding: 16 },
   body: { paddingTop: 8, gap: 8 },
   title: { flex: 1, fontSize: 16, fontWeight: "600" },
 });
@@ -68,14 +68,22 @@ export function Accordion({
   defaultExpanded = true,
   solid = false,
   icon,
+  onToggle,
   children,
 }: {
-  title: string;
+  /** A plain string gets the default heading treatment (and, in solid mode, an animated color
+   * crossfade). Pass a custom node instead for richer headers (e.g. a big-number stat) — it's
+   * responsible for its own typography/color in that case. */
+  title: ReactNode;
   tone?: AccordionTone;
   defaultExpanded?: boolean;
   solid?: boolean;
   /** Optional leading Ionicons glyph, shown to the left of the title. */
   icon?: keyof typeof Ionicons.glyphMap;
+  /** Fires after each toggle with the new expanded state — a plain observer, not a controlled-
+   * component prop, so it can't affect the animation above. Lets a custom title node (which
+   * doesn't get the built-in animated color crossfade) react to open/closed itself. */
+  onToggle?: (expanded: boolean) => void;
   children: ReactNode;
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -110,18 +118,27 @@ export function Accordion({
     const next = !expanded;
     setExpanded(next);
     progress.value = withTiming(next ? 1 : 0, { duration: TRANSITION_MS });
+    onToggle?.(next);
   }
 
   const header = (
     <Pressable onPress={toggle} className="flex-row items-center justify-between gap-2" accessibilityRole="button" accessibilityState={{ expanded }}>
       <View className="flex-1 flex-row items-center gap-2">
-        {icon ? <Ionicons name={icon} size={20} color={iconColor} /> : null}
-        {solidColor ? (
-          <Animated.Text style={[styles.title, titleStyle]}>{title}</Animated.Text>
+        {typeof title === "string" ? (
+          <>
+            {icon ? <Ionicons name={icon} size={20} color={iconColor} /> : null}
+            {solidColor ? (
+              <Animated.Text style={[styles.title, titleStyle]}>{title}</Animated.Text>
+            ) : (
+              <Text variant="heading" className={clsx("flex-1", text)}>
+                {title}
+              </Text>
+            )}
+          </>
         ) : (
-          <Text variant="heading" className={clsx("flex-1", text)}>
-            {title}
-          </Text>
+          // Custom title node — it owns its own icon/typography/color, not this header's usual
+          // string treatment (used for the Dashboard's big-number stat headers).
+          <View className="flex-1">{title}</View>
         )}
       </View>
       <Animated.View style={chevronStyle}>

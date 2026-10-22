@@ -27,16 +27,18 @@ function toStyle(spec: ShadowSpec): ViewStyle {
 }
 
 // Shared elevation tokens. Use these instead of hand-writing shadow props so every surface lifts
-// the same way.
+// the same way. Tinted with the darkest primary shade instead of flat black — a soft, warm-green
+// cast instead of a neutral-grey one, so shadows read as part of this palette rather than a
+// generic default. Kept subtle (low opacity, wide soft radius) for a tactile, not heavy, lift.
 export const shadows = {
   // Small lift for cards sitting on a flat background.
-  subtle: toStyle({ color: "#000000", offset: { width: 0, height: 1 }, opacity: 0.08, radius: 3, elevation: 2 }),
+  subtle: toStyle({ color: primary[950], offset: { width: 0, height: 2 }, opacity: 0.1, radius: 6, elevation: 2 }),
   // Clear separation for panels and sheets.
-  raised: toStyle({ color: "#000000", offset: { width: 0, height: 4 }, opacity: 0.12, radius: 12, elevation: 6 }),
+  raised: toStyle({ color: primary[950], offset: { width: 0, height: 6 }, opacity: 0.14, radius: 16, elevation: 6 }),
   // Strongest lift, for things that should sit over everything else.
-  floating: toStyle({ color: "#000000", offset: { width: 0, height: 8 }, opacity: 0.16, radius: 20, elevation: 12 }),
+  floating: toStyle({ color: primary[950], offset: { width: 0, height: 10 }, opacity: 0.18, radius: 24, elevation: 12 }),
   // Brand-tinted glow for primary calls to action.
   glow: toStyle({ color: primary[900], offset: { width: 0, height: 4 }, opacity: 0.5, radius: 10, elevation: 8 }),
   // Upward shadow for a bottom tab bar, so it reads as sitting above the content.
-  tabBar: toStyle({ color: "#000000", offset: { width: 0, height: -2 }, opacity: 0.08, radius: 8, elevation: 8 }),
+  tabBar: toStyle({ color: primary[950], offset: { width: 0, height: -2 }, opacity: 0.1, radius: 10, elevation: 8 }),
 };

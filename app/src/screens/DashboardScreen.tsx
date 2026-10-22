@@ -2,10 +2,14 @@ import { useCallback, useState } from "react";
 import { Pressable, View, useWindowDimensions } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
+import clsx from "clsx";
 import type { RootTabParamList } from "../navigation/RootNavigator";
 import { apiGet } from "../api/client";
 import { Screen, Text, EmptyState, Card, Accordion, Badge, Button } from "../ui";
 import { LoginLogo } from "./auth/LoginLogo";
+import { danger, primary, warning, white } from "../theme/palette";
+import { shadows } from "../theme/shadows";
 
 type RepeatOrder = { partNumber: string; count: number };
 type Machine = {
@@ -19,6 +23,46 @@ type Machine = {
 };
 
 type Props = BottomTabScreenProps<RootTabParamList, "Dashboard">;
+
+// A KPI-card-style header for the alert accordions below: icon badge + a large bold count +
+// a short caption, in place of Accordion's default "heading" title treatment. Accordion's
+// built-in color crossfade only applies to a plain string title, so this reads its own expanded
+// state (passed down from the screen, via Accordion's onToggle) to switch between "white on the
+// solid tone background" (collapsed) and "tone-tinted on white" (expanded) itself.
+function AlertStatHeader({
+  icon,
+  count,
+  label,
+  tone,
+  expanded,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  count: number;
+  label: string;
+  tone: "danger" | "warning";
+  expanded: boolean;
+}) {
+  const badgeBg = expanded ? (tone === "danger" ? "bg-danger-100 dark:bg-danger-900" : "bg-warning-100 dark:bg-warning-900") : "bg-white/20";
+  const countClass = expanded
+    ? tone === "danger"
+      ? "text-danger-700 dark:text-danger-300"
+      : "text-warning-800 dark:text-warning-200"
+    : "text-white";
+  const labelClass = expanded ? "text-neutral-500 dark:text-neutral-400" : "text-white/80";
+  const iconColor = expanded ? (tone === "danger" ? danger[600] : warning[600]) : white;
+
+  return (
+    <View className="flex-row items-center gap-3 py-0.5">
+      <View className={clsx("size-11 items-center justify-center rounded-2xl", badgeBg)}>
+        <Ionicons name={icon} size={22} color={iconColor} />
+      </View>
+      <View>
+        <Text className={clsx("text-3xl font-extrabold leading-tight", countClass)}>{count}</Text>
+        <Text className={clsx("text-xs font-semibold uppercase tracking-wide", labelClass)}>{label}</Text>
+      </View>
+    </View>
+  );
+}
 
 // A plain list of machines inside an alert accordion: no card chrome, a hairline between rows,
 // and the count badge inline on the right.
@@ -55,6 +99,8 @@ function AlertMachineRows({
 export function DashboardScreen({ navigation }: Props) {
   const [repeatOrders, setRepeatOrders] = useState<RepeatOrder[]>([]);
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [dueExpanded, setDueExpanded] = useState(false);
+  const [upcomingExpanded, setUpcomingExpanded] = useState(false);
   const { height } = useWindowDimensions();
   const openMilestones = (m: Machine) => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } });
 
@@ -92,10 +138,18 @@ export function DashboardScreen({ navigation }: Props) {
       {machinesWithDueMilestones.length > 0 ? (
         <Accordion
           tone="danger"
-          icon="medkit"
           solid
           defaultExpanded={false}
-          title={`${machinesWithDueMilestones.length} machine${machinesWithDueMilestones.length > 1 ? "s" : ""} overdue`}
+          onToggle={setDueExpanded}
+          title={
+            <AlertStatHeader
+              icon="medkit"
+              count={machinesWithDueMilestones.length}
+              label={machinesWithDueMilestones.length === 1 ? "Machine overdue" : "Machines overdue"}
+              tone="danger"
+              expanded={dueExpanded}
+            />
+          }
         >
           <AlertMachineRows
             machines={machinesWithDueMilestones}
@@ -109,10 +163,18 @@ export function DashboardScreen({ navigation }: Props) {
       {machinesWithUpcomingMilestones.length > 0 ? (
         <Accordion
           tone="warning"
-          icon="warning"
           solid
           defaultExpanded={false}
-          title={`${machinesWithUpcomingMilestones.length} machine${machinesWithUpcomingMilestones.length > 1 ? "s" : ""} upcoming`}
+          onToggle={setUpcomingExpanded}
+          title={
+            <AlertStatHeader
+              icon="warning"
+              count={machinesWithUpcomingMilestones.length}
+              label={machinesWithUpcomingMilestones.length === 1 ? "Machine upcoming" : "Machines upcoming"}
+              tone="warning"
+              expanded={upcomingExpanded}
+            />
+          }
         >
           <AlertMachineRows
             machines={machinesWithUpcomingMilestones}
@@ -147,16 +209,29 @@ export function DashboardScreen({ navigation }: Props) {
         )}
       </View>
 
-      <View className="gap-2">
+      <View className="gap-3">
         <Text variant="section">Repeat orders flagged</Text>
         {repeatOrders.length === 0 ? (
           <EmptyState title="None yet" />
         ) : (
-          <View className="gap-1">
-            {repeatOrders.map((r) => (
-              <Text key={r.partNumber} className="py-2">
-                • {r.partNumber} ordered {r.count}× across the fleet
-              </Text>
+          // Same recipe as Card (rounded-card, white/neutral-900 surface, shadows.subtle) built
+          // directly rather than via <Card>, since Card bakes in p-4 and each row here wants its
+          // own padding instead — the same reason AlertMachineRows above isn't Card-wrapped either.
+          <View className="overflow-hidden rounded-card bg-white dark:bg-neutral-900" style={shadows.subtle}>
+            {repeatOrders.map((r, i) => (
+              <View key={r.partNumber}>
+                {i > 0 ? <View className="h-px bg-neutral-200 dark:bg-neutral-800" /> : null}
+                <View className="flex-row items-center gap-3 p-4">
+                  <View className="size-10 items-center justify-center rounded-2xl bg-primary-100 dark:bg-primary-900">
+                    <Ionicons name="repeat" size={18} color={primary[600]} />
+                  </View>
+                  <View className="flex-1">
+                    <Text variant="heading">{r.partNumber}</Text>
+                    <Text variant="muted">ordered across the fleet</Text>
+                  </View>
+                  <Badge tone="primary" label={`×${r.count}`} />
+                </View>
+              </View>
             ))}
           </View>
         )}

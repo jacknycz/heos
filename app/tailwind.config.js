@@ -29,7 +29,10 @@ module.exports = {
         neutral: colors.stone,
       },
       borderRadius: {
-        card: "12px",
+        // 18, not the old 12 — softer, friendlier corners read better against the new organic
+        // green brand (2026's dashboard/card trend has moved toward this kind of soft-rounded,
+        // tactile surface language generally).
+        card: "18px",
       },
     },
   },
