@@ -7,6 +7,7 @@ import { LocationsScreen } from "../screens/LocationsScreen";
 import { LocationFormScreen } from "../screens/LocationFormScreen";
 import { primary } from "../theme/palette";
 import { useHeaderTheme } from "./useHeaderTheme";
+import { DefaultBackButton } from "./DefaultBackButton";
 
 export type SettingsStackParamList = {
   SettingsHome: undefined;
@@ -26,6 +27,7 @@ export function SettingsStack() {
         headerStyle: { backgroundColor: header.background },
         headerTintColor: header.text,
         headerTitleStyle: { color: header.text },
+        headerLeft: DefaultBackButton,
       }}
     >
       <Stack.Screen name="SettingsHome" component={SettingsScreen} />

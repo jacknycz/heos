@@ -10,6 +10,7 @@ import { PartFormScreen } from "../screens/PartFormScreen";
 import { MilestoneFormScreen } from "../screens/MilestoneFormScreen";
 import { primary } from "../theme/palette";
 import { useHeaderTheme } from "./useHeaderTheme";
+import { DefaultBackButton } from "./DefaultBackButton";
 
 export type MachineRecord = {
   id: string;
@@ -62,6 +63,7 @@ export function MachinesStack() {
         headerStyle: { backgroundColor: header.background },
         headerTintColor: header.text,
         headerTitleStyle: { color: header.text },
+        headerLeft: DefaultBackButton,
       }}
     >
       <Stack.Screen
@@ -95,16 +97,13 @@ export function MachinesStack() {
           // where to go — it bubbles up to the tab navigator's own back-history, so it reports
           // true and goBack() would switch to the previously-focused tab (Dashboard) instead of
           // popping here. Check this stack's own depth instead.
-          // Matches Screen's p-4 (16px) content padding — native-stack's own default left inset
-          // for a custom headerLeft doesn't line up with it otherwise.
-          headerLeftContainerStyle: { paddingLeft: 16 },
           headerLeft: () => (
             <Pressable
               onPress={() =>
                 navigation.getState().index > 0 ? navigation.goBack() : navigation.reset({ index: 0, routes: [{ name: "MachineList" }] })
               }
               hitSlop={8}
-              className="pr-2"
+              className="py-1 pl-4 pr-2"
             >
               <Ionicons name="chevron-back" size={22} color={primary[600]} />
             </Pressable>
