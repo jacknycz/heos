@@ -95,6 +95,9 @@ export function MachinesStack() {
           // where to go — it bubbles up to the tab navigator's own back-history, so it reports
           // true and goBack() would switch to the previously-focused tab (Dashboard) instead of
           // popping here. Check this stack's own depth instead.
+          // Matches Screen's p-4 (16px) content padding — native-stack's own default left inset
+          // for a custom headerLeft doesn't line up with it otherwise.
+          headerLeftContainerStyle: { paddingLeft: 16 },
           headerLeft: () => (
             <Pressable
               onPress={() =>
@@ -103,7 +106,7 @@ export function MachinesStack() {
               hitSlop={8}
               className="pr-2"
             >
-              <Ionicons name="chevron-back" size={26} color={header.text} />
+              <Ionicons name="chevron-back" size={22} color={primary[600]} />
             </Pressable>
           ),
         })}

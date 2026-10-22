@@ -40,7 +40,7 @@ export function MilestonesCard({
     <Card className="gap-3">
       <View className="flex-row items-center justify-between">
         <Text variant="heading">Milestones</Text>
-        <Button size="sm" title="Add Milestone" onPress={onAddPress} />
+        <Button size="sm" variant="secondary" title="Add Milestone" onPress={onAddPress} />
       </View>
       <Text variant="muted">Current reading: {currentTrackingValue != null ? `${currentTrackingValue} ${unitLabel}` : "not logged yet"}</Text>
 
