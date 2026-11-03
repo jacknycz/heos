@@ -1,7 +1,7 @@
 // One-off seed for a realistic Daly Organics demo org — run against whichever DATABASE_URL is in
 // scope (local .env, or `railway run` against staging) so the client has a populated fleet to look
 // at in TestFlight instead of an empty first-run app. Safe to re-run: aborts instead of duplicating
-// if a "Daly Organics" org already exists — delete it manually first if you want a clean reseed.
+// if an org named ORG_NAME already exists — delete it manually first if you want a clean reseed.
 import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../src/db";
@@ -11,13 +11,18 @@ import { hashPassword } from "../src/lib/auth";
 // the client. Tell them this on handoff; it's not meant to be memorable/secure beyond that.
 const DEMO_PASSWORD = "DalyDemo2026!";
 
+// Every title-level name (org, locations) gets this suffix so the fake login is unmistakable
+// wherever it shows up in the app — never just "Daly Organics" with nothing marking it as test data.
+const TEST_SUFFIX = " TEST";
+const ORG_NAME = `Daly Organics${TEST_SUFFIX}`;
+
 type Role = "ADMIN" | "MANAGER" | "MECHANIC" | "DRIVER";
 
 const LOCATIONS = [
-  { name: "Main Yard (HQ)", address: "4100 Harvest Rd, Salinas, CA" },
-  { name: "North Field Depot", address: "892 Prunedale Rd, Prunedale, CA" },
-  { name: "South Ranch Yard", address: "2210 Old Stage Rd, Gonzales, CA" },
-  { name: "Packing House Lot", address: "77 Packer Ave, Salinas, CA" },
+  { name: `Main Yard (HQ)${TEST_SUFFIX}`, address: "4100 Harvest Rd, Salinas, CA" },
+  { name: `North Field Depot${TEST_SUFFIX}`, address: "892 Prunedale Rd, Prunedale, CA" },
+  { name: `South Ranch Yard${TEST_SUFFIX}`, address: "2210 Old Stage Rd, Gonzales, CA" },
+  { name: `Packing House Lot${TEST_SUFFIX}`, address: "77 Packer Ave, Salinas, CA" },
 ];
 
 const USERS: { name: string; email: string; role: Role }[] = [
@@ -112,13 +117,13 @@ function daysAgo(days: number) {
 }
 
 async function main() {
-  const [existing] = await db.select().from(schema.organizations).where(eq(schema.organizations.name, "Daly Organics"));
+  const [existing] = await db.select().from(schema.organizations).where(eq(schema.organizations.name, ORG_NAME));
   if (existing) {
-    console.error('A "Daly Organics" organization already exists — delete it first if you want a clean reseed.');
+    console.error(`An organization named "${ORG_NAME}" already exists — delete it first if you want a clean reseed.`);
     process.exit(1);
   }
 
-  const [organization] = await db.insert(schema.organizations).values({ name: "Daly Organics" }).returning();
+  const [organization] = await db.insert(schema.organizations).values({ name: ORG_NAME }).returning();
   console.log(`Created organization ${organization.id}`);
 
   const locationRows = await db
