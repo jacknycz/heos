@@ -1,17 +1,18 @@
 import { useCallback, useLayoutEffect, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import type { MachinesStackParamList } from "../navigation/MachinesStack";
 import { apiDelete, apiGet, apiPost } from "../api/client";
-import { Screen, Text, Tabs, QuickActions, Sheet } from "../ui";
+import { useAuth } from "../auth/AuthContext";
+import { Screen, Text, Tabs, QuickActions, Sheet, EmptyState } from "../ui";
 import { RepairLogForm } from "./RepairLogFormScreen";
 import { DriverNoteForm } from "./DriverNoteFormScreen";
 import { HoursEntryForm } from "./HoursEntryForm";
 import { DiagnosticsForm } from "./DiagnosticsForm";
 import { shadows } from "../theme/shadows";
-import { white } from "../theme/palette";
+import { neutral, white } from "../theme/palette";
 import { IdentityTab } from "./machinePassport/IdentityTab";
 import { HistoryTab } from "./machinePassport/HistoryTab";
 import { PartsCostTab } from "./machinePassport/PartsCostTab";
@@ -88,10 +89,15 @@ function PassportHeaderTitle({ name, subtitle }: { name: string; subtitle: strin
 // Milestones' "Mark Done"/"Delete" are the one exception that don't navigate away, so they
 // explicitly re-fetch afterward instead of relying on the focus-triggered one below.
 export function MachinePassportScreen({ route, navigation }: Props) {
+  const { user } = useAuth();
+  // Mirrors the server (see server/src/routes/repairLogs.ts): logging a repair is
+  // mechanic-and-up work, not a driver action.
+  const canLogRepair = user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "MECHANIC";
   const { machineId } = route.params;
   const [passport, setPassport] = useState<Passport | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("identity");
   const [activeSheet, setActiveSheet] = useState<SheetKey | null>(null);
+  const [error, setError] = useState(false);
 
   // Closing a sheet just dismisses it; finishing one also refreshes the passport so the new entry shows.
   const closeSheet = () => setActiveSheet(null);
@@ -101,9 +107,10 @@ export function MachinePassportScreen({ route, navigation }: Props) {
   };
 
   const refetch = useCallback(() => {
+    setError(false);
     return apiGet<Passport>(`/machines/${machineId}`)
       .then(setPassport)
-      .catch(() => {});
+      .catch(() => setError(true));
   }, [machineId]);
 
   // Re-fetch on every focus, not just on mount — each logging form navigates back here on
@@ -130,14 +137,20 @@ export function MachinePassportScreen({ route, navigation }: Props) {
       <Screen scroll edges={["bottom"]}>
         <QuickActions
           actions={[
-            { title: "Log Repair", onPress: () => setActiveSheet("repair"), variant: "industrial" },
+            ...(canLogRepair ? [{ title: "Log Repair", onPress: () => setActiveSheet("repair"), variant: "industrial" as const }] : []),
             { title: "Driver Note", onPress: () => setActiveSheet("note"), variant: "industrial" },
             { title: "Hours/Distance", onPress: () => setActiveSheet("hours"), variant: "industrial" },
             { title: "Diagnostics", onPress: () => setActiveSheet("diagnostics"), variant: "industrial" },
           ]}
         />
 
-        {passport ? (
+        {error ? (
+          <EmptyState title="Couldn't load this machine" subtitle="Check your connection and try again." onRetry={refetch} />
+        ) : !passport ? (
+          <View className="items-center py-12">
+            <ActivityIndicator color={neutral[500]} />
+          </View>
+        ) : (
           <>
             <Tabs
               variant="icon"
@@ -218,7 +231,7 @@ export function MachinePassportScreen({ route, navigation }: Props) {
             {/* Clears the floating chat button so it never covers the last card. */}
             <View className="h-20" />
           </>
-        ) : null}
+        )}
       </Screen>
 
       <Pressable

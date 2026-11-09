@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Pressable, View, useWindowDimensions } from "react-native";
+import { ActivityIndicator, Pressable, View, useWindowDimensions } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import type { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,7 +8,7 @@ import type { RootTabParamList } from "../navigation/RootNavigator";
 import { apiGet } from "../api/client";
 import { Screen, Text, EmptyState, Card, Accordion, Badge, Button } from "../ui";
 import { LoginLogo } from "./auth/LoginLogo";
-import { danger, primary, warning, white } from "../theme/palette";
+import { danger, neutral, primary, warning, white } from "../theme/palette";
 import { shadows } from "../theme/shadows";
 
 type RepeatOrder = { partNumber: string; count: number };
@@ -101,21 +101,31 @@ export function DashboardScreen({ navigation }: Props) {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [dueExpanded, setDueExpanded] = useState(false);
   const [upcomingExpanded, setUpcomingExpanded] = useState(false);
+  // Only the very first load shows a full-screen spinner — refocusing (e.g. back from a passport
+  // edit) re-fetches silently so the dashboard doesn't flicker away while it reloads.
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const { height } = useWindowDimensions();
   const openMilestones = (m: Machine) => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } });
+
+  const fetchAll = useCallback(() => {
+    setError(false);
+    Promise.all([apiGet<RepeatOrder[]>("/parts/repeat-orders"), apiGet<Machine[]>("/machines")])
+      .then(([repeatOrderRows, machineRows]) => {
+        setRepeatOrders(repeatOrderRows);
+        setMachines(machineRows);
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
 
   // Re-fetch on every focus, not just on mount — bottom-tab screens stay mounted after the
   // first visit, so a mount-only effect would never see a machine edit made in another tab
   // (e.g. renaming a machine from its passport) until a full app reload.
   useFocusEffect(
     useCallback(() => {
-      apiGet<RepeatOrder[]>("/parts/repeat-orders")
-        .then(setRepeatOrders)
-        .catch(() => {});
-      apiGet<Machine[]>("/machines")
-        .then(setMachines)
-        .catch(() => {});
-    }, []),
+      fetchAll();
+    }, [fetchAll]),
   );
 
   // lastActivityAt (from the server) is the greater of the machine's own updatedAt (bumped on
@@ -135,107 +145,117 @@ export function DashboardScreen({ navigation }: Props) {
         </Text>
       </View>
 
-      {machinesWithDueMilestones.length > 0 ? (
-        <Accordion
-          tone="danger"
-          solid
-          defaultExpanded={false}
-          onToggle={setDueExpanded}
-          title={
-            <AlertStatHeader
-              icon="medkit"
-              count={machinesWithDueMilestones.length}
-              label={machinesWithDueMilestones.length === 1 ? "Machine overdue" : "Machines overdue"}
-              tone="danger"
-              expanded={dueExpanded}
-            />
-          }
-        >
-          <AlertMachineRows
-            machines={machinesWithDueMilestones}
-            badgeTone="danger"
-            badgeLabel={(m) => `${m.dueMilestonesCount} due`}
-            onPress={openMilestones}
-          />
-        </Accordion>
-      ) : null}
-
-      {machinesWithUpcomingMilestones.length > 0 ? (
-        <Accordion
-          tone="warning"
-          solid
-          defaultExpanded={false}
-          onToggle={setUpcomingExpanded}
-          title={
-            <AlertStatHeader
-              icon="warning"
-              count={machinesWithUpcomingMilestones.length}
-              label={machinesWithUpcomingMilestones.length === 1 ? "Machine upcoming" : "Machines upcoming"}
-              tone="warning"
-              expanded={upcomingExpanded}
-            />
-          }
-        >
-          <AlertMachineRows
-            machines={machinesWithUpcomingMilestones}
-            badgeTone="warning"
-            badgeLabel={(m) => `${m.upcomingMilestonesCount} coming up`}
-            onPress={openMilestones}
-          />
-        </Accordion>
-      ) : null}
-
-      <View className="gap-3">
-        <View className="flex-row items-center justify-between">
-          <Text variant="section">Machines</Text>
-          <Button variant="outline" size="sm" title="View all" onPress={() => navigation.navigate("Machines", { screen: "MachineList" })} />
+      {loading ? (
+        <View className="items-center py-12">
+          <ActivityIndicator color={neutral[500]} />
         </View>
-        {recentMachines.length === 0 ? (
-          <EmptyState title="No machines yet" />
-        ) : (
-          <View className="gap-2">
-            {recentMachines.map((m) => (
-              <Pressable key={m.id} onPress={() => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } })}>
-                <Card className="flex-row items-center justify-between">
-                  <View>
-                    <Text variant="heading">{m.name}</Text>
-                    <Text variant="muted">{[m.make, m.model].filter(Boolean).join(" ") || "—"}</Text>
-                  </View>
-                  <Text variant="muted">{new Date(m.lastActivityAt).toLocaleDateString()}</Text>
-                </Card>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
+      ) : error ? (
+        <EmptyState title="Couldn't load the dashboard" subtitle="Check your connection and try again." onRetry={fetchAll} />
+      ) : (
+        <>
+          {machinesWithDueMilestones.length > 0 ? (
+            <Accordion
+              tone="danger"
+              solid
+              defaultExpanded={false}
+              onToggle={setDueExpanded}
+              title={
+                <AlertStatHeader
+                  icon="medkit"
+                  count={machinesWithDueMilestones.length}
+                  label={machinesWithDueMilestones.length === 1 ? "Machine overdue" : "Machines overdue"}
+                  tone="danger"
+                  expanded={dueExpanded}
+                />
+              }
+            >
+              <AlertMachineRows
+                machines={machinesWithDueMilestones}
+                badgeTone="danger"
+                badgeLabel={(m) => `${m.dueMilestonesCount} due`}
+                onPress={openMilestones}
+              />
+            </Accordion>
+          ) : null}
 
-      <View className="gap-3">
-        <Text variant="section">Repeat orders flagged</Text>
-        {repeatOrders.length === 0 ? (
-          <EmptyState title="None yet" />
-        ) : (
-          // Same recipe as Card (rounded-card, white/neutral-900 surface, shadows.subtle) built
-          // directly rather than via <Card>, since Card bakes in p-4 and each row here wants its
-          // own padding instead — the same reason AlertMachineRows above isn't Card-wrapped either.
-          <View className="overflow-hidden rounded-card bg-white dark:bg-neutral-900" style={shadows.subtle}>
-            {repeatOrders.map((r, i) => (
-              <View key={r.partNumber}>
-                {i > 0 ? <View className="h-px bg-neutral-200 dark:bg-neutral-800" /> : null}
-                <View className="flex-row items-center gap-3 p-4">
-                  <View className="size-10 items-center justify-center rounded-2xl bg-primary-100 dark:bg-primary-900">
-                    <Ionicons name="repeat" size={18} color={primary[600]} />
-                  </View>
-                  <View className="flex-1">
-                    <Text variant="heading">{r.partNumber}</Text>
-                    <Text variant="muted">ordered across the fleet</Text>
-                  </View>
-                  <Badge tone="primary" label={`×${r.count}`} />
-                </View>
+          {machinesWithUpcomingMilestones.length > 0 ? (
+            <Accordion
+              tone="warning"
+              solid
+              defaultExpanded={false}
+              onToggle={setUpcomingExpanded}
+              title={
+                <AlertStatHeader
+                  icon="warning"
+                  count={machinesWithUpcomingMilestones.length}
+                  label={machinesWithUpcomingMilestones.length === 1 ? "Machine upcoming" : "Machines upcoming"}
+                  tone="warning"
+                  expanded={upcomingExpanded}
+                />
+              }
+            >
+              <AlertMachineRows
+                machines={machinesWithUpcomingMilestones}
+                badgeTone="warning"
+                badgeLabel={(m) => `${m.upcomingMilestonesCount} coming up`}
+                onPress={openMilestones}
+              />
+            </Accordion>
+          ) : null}
+
+          <View className="gap-3">
+            <View className="flex-row items-center justify-between">
+              <Text variant="section">Machines</Text>
+              <Button variant="outline" size="sm" title="View all" onPress={() => navigation.navigate("Machines", { screen: "MachineList" })} />
+            </View>
+            {recentMachines.length === 0 ? (
+              <EmptyState title="No machines yet" />
+            ) : (
+              <View className="gap-2">
+                {recentMachines.map((m) => (
+                  <Pressable key={m.id} onPress={() => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } })}>
+                    <Card className="flex-row items-center justify-between">
+                      <View>
+                        <Text variant="heading">{m.name}</Text>
+                        <Text variant="muted">{[m.make, m.model].filter(Boolean).join(" ") || "—"}</Text>
+                      </View>
+                      <Text variant="muted">{new Date(m.lastActivityAt).toLocaleDateString()}</Text>
+                    </Card>
+                  </Pressable>
+                ))}
               </View>
-            ))}
+            )}
           </View>
-        )}
-      </View>
+
+          <View className="gap-3">
+            <Text variant="section">Repeat orders flagged</Text>
+            {repeatOrders.length === 0 ? (
+              <EmptyState title="None yet" />
+            ) : (
+              // Same recipe as Card (rounded-card, white/neutral-900 surface, shadows.subtle) built
+              // directly rather than via <Card>, since Card bakes in p-4 and each row here wants its
+              // own padding instead — the same reason AlertMachineRows above isn't Card-wrapped either.
+              <View className="overflow-hidden rounded-card bg-white dark:bg-neutral-900" style={shadows.subtle}>
+                {repeatOrders.map((r, i) => (
+                  <View key={r.partNumber}>
+                    {i > 0 ? <View className="h-px bg-neutral-200 dark:bg-neutral-800" /> : null}
+                    <View className="flex-row items-center gap-3 p-4">
+                      <View className="size-10 items-center justify-center rounded-2xl bg-primary-100 dark:bg-primary-900">
+                        <Ionicons name="repeat" size={18} color={primary[600]} />
+                      </View>
+                      <View className="flex-1">
+                        <Text variant="heading">{r.partNumber}</Text>
+                        <Text variant="muted">ordered across the fleet</Text>
+                      </View>
+                      <Badge tone="primary" label={`×${r.count}`} />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </>
+      )}
     </Screen>
   );
 }
