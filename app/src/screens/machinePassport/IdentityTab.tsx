@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import { Button, Card, Text } from "../../ui";
 import { MilestonesCard, type Milestone } from "./MilestonesCard";
+import { useAuth } from "../../auth/AuthContext";
 
 // "YYYY-MM-DD" parsed via new Date(string) is treated as UTC midnight, which can render as the
 // wrong calendar day depending on the viewer's timezone — parse the components as local instead.
@@ -43,6 +44,10 @@ export function IdentityTab({
   onCompleteMilestone: (milestone: Milestone) => void;
   onDeleteMilestone: (milestone: Milestone) => void;
 }) {
+  const { user } = useAuth();
+  // Mirrors the server (see server/src/routes/machines.ts): editing a machine's identity is
+  // fleet-management work, not a mechanic/driver action.
+  const canManage = user?.role === "ADMIN" || user?.role === "MANAGER";
   const unitLabel = machine.trackingUnit === "hours" ? "Hours" : "Miles";
   // "Next" by threshold value, not creation order — whichever is closest (or already past due)
   // is what actually matters here, completed one-time milestones (nextDueAtValue null) excluded.
@@ -108,9 +113,11 @@ export function IdentityTab({
         ))}
       </Card>
 
-      <View className="flex-row justify-end">
-        <Button size="sm" title="Edit" onPress={onEditPress} />
-      </View>
+      {canManage ? (
+        <View className="flex-row justify-end">
+          <Button size="sm" title="Edit" onPress={onEditPress} />
+        </View>
+      ) : null}
     </View>
   );
 }

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../db";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireRole } from "../lib/auth";
 import { assertMachineInOrg } from "../lib/machineContext";
 import { getCurrentTrackingValue } from "../lib/milestones";
 
@@ -22,7 +22,9 @@ const createSchema = z.object({
 
 // A maintenance rule for a machine — "every 500 hrs, fluids check" (recurring) or "at 500 hrs,
 // break-in service" (one_time). Measured against the machine's own trackingUnit.
-milestonesRouter.post("/", async (req, res) => {
+// Defining/changing the PM schedule itself is fleet-management, not something any logged-in
+// user should be able to do (contrast with /complete below, which any mechanic can hit).
+milestonesRouter.post("/", requireRole("ADMIN", "MANAGER"), async (req, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
   if (!(await assertMachineInOrg(parsed.data.machineId, req.user!.organizationId))) {
@@ -48,7 +50,7 @@ const updateSchema = z.object({
 
 // Correcting a milestone's rule (wrong label/interval), pinning an explicit next-due value, or
 // resetting it as if just completed — all in one PATCH.
-milestonesRouter.patch("/:id", async (req, res) => {
+milestonesRouter.patch("/:id", requireRole("ADMIN", "MANAGER"), async (req, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 
@@ -70,7 +72,7 @@ milestonesRouter.patch("/:id", async (req, res) => {
   res.json(updated);
 });
 
-milestonesRouter.delete("/:id", async (req, res) => {
+milestonesRouter.delete("/:id", requireRole("ADMIN", "MANAGER"), async (req, res) => {
   const [existing] = await db.select().from(schema.milestones).where(eq(schema.milestones.id, req.params.id));
   if (!existing || !(await assertMachineInOrg(existing.machineId, req.user!.organizationId))) {
     return res.status(404).json({ error: "not found" });
@@ -81,7 +83,8 @@ milestonesRouter.delete("/:id", async (req, res) => {
 
 // Marks a milestone done at the machine's current reading. Recurring: resets the countdown to
 // fire again thresholdValue units later. One-time: done permanently.
-milestonesRouter.post("/:id/complete", async (req, res) => {
+// Marking a milestone done is the mechanic's own action, unlike defining the schedule above.
+milestonesRouter.post("/:id/complete", requireRole("ADMIN", "MANAGER", "MECHANIC"), async (req, res) => {
   const [existing] = await db.select().from(schema.milestones).where(eq(schema.milestones.id, req.params.id));
   if (!existing) return res.status(404).json({ error: "not found" });
 

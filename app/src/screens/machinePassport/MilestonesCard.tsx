@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { Badge, Button, Card, ConfirmDialog, Text } from "../../ui";
+import { useAuth } from "../../auth/AuthContext";
 
 export type Milestone = {
   id: string;
@@ -33,6 +34,12 @@ export function MilestonesCard({
   onCompletePress: (milestone: Milestone) => void;
   onDeletePress: (milestone: Milestone) => void;
 }) {
+  const { user } = useAuth();
+  // Mirrors the server's role gates (see server/src/routes/milestones.ts): defining/editing/
+  // deleting the PM schedule is fleet-management work, while marking one done is the mechanic's
+  // own action on top of that.
+  const canManage = user?.role === "ADMIN" || user?.role === "MANAGER";
+  const canComplete = canManage || user?.role === "MECHANIC";
   const [pendingDelete, setPendingDelete] = useState<Milestone | null>(null);
   const unitLabel = trackingUnit === "hours" ? "hrs" : "mi";
 
@@ -40,7 +47,7 @@ export function MilestonesCard({
     <Card className="gap-3">
       <View className="flex-row items-center justify-between">
         <Text variant="heading">Milestones</Text>
-        <Button size="sm" variant="secondary" title="Add Milestone" onPress={onAddPress} />
+        {canManage ? <Button size="sm" variant="secondary" title="Add Milestone" onPress={onAddPress} /> : null}
       </View>
       <Text variant="muted">Current reading: {currentTrackingValue != null ? `${currentTrackingValue} ${unitLabel}` : "not logged yet"}</Text>
 
@@ -68,17 +75,21 @@ export function MilestonesCard({
                   )}
                 </View>
                 <View className="flex-row flex-wrap gap-4">
-                  {!m.isComplete ? (
+                  {!m.isComplete && canComplete ? (
                     <Pressable onPress={() => onCompletePress(m)}>
                       <Text className="font-semibold text-primary-600">Mark Done</Text>
                     </Pressable>
                   ) : null}
-                  <Pressable onPress={() => onEditPress(m)}>
-                    <Text className="font-semibold text-primary-600">Edit</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setPendingDelete(m)}>
-                    <Text className="font-semibold text-danger-600">Delete</Text>
-                  </Pressable>
+                  {canManage ? (
+                    <>
+                      <Pressable onPress={() => onEditPress(m)}>
+                        <Text className="font-semibold text-primary-600">Edit</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setPendingDelete(m)}>
+                        <Text className="font-semibold text-danger-600">Delete</Text>
+                      </Pressable>
+                    </>
+                  ) : null}
                 </View>
               </View>
             </View>

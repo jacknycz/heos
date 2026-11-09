@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "../db";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireRole } from "../lib/auth";
 import { assertMachineInOrg } from "../lib/machineContext";
 
 export const partsRouter = Router();
@@ -21,7 +21,8 @@ const createSchema = z.object({
   receiptImages: z.array(receiptImageSchema).optional(),
 });
 
-partsRouter.post("/", async (req, res) => {
+// Ordering/correcting parts is mechanic-and-up work, same tier as repair logs.
+partsRouter.post("/", requireRole("ADMIN", "MANAGER", "MECHANIC"), async (req, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
   if (!(await assertMachineInOrg(parsed.data.machineId, req.user!.organizationId))) {
@@ -46,7 +47,7 @@ const updateSchema = z.object({
 
 // Correcting a part/cost entry after the fact (wrong cost, better description). Receipts are
 // managed independently via the /:id/receipts routes below, not through this PATCH.
-partsRouter.patch("/:id", async (req, res) => {
+partsRouter.patch("/:id", requireRole("ADMIN", "MANAGER", "MECHANIC"), async (req, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
   if (Object.keys(parsed.data).length === 0) return res.status(400).json({ error: "no fields to update" });
@@ -62,7 +63,7 @@ partsRouter.patch("/:id", async (req, res) => {
 
 // Add one more receipt photo to an existing part — used once the part already exists (editing),
 // as opposed to the receiptImages batch on creation above.
-partsRouter.post("/:id/receipts", async (req, res) => {
+partsRouter.post("/:id/receipts", requireRole("ADMIN", "MANAGER", "MECHANIC"), async (req, res) => {
   const parsed = z.object({ image: receiptImageSchema }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 
@@ -75,7 +76,7 @@ partsRouter.post("/:id/receipts", async (req, res) => {
   res.status(201).json(receipt);
 });
 
-partsRouter.delete("/:id/receipts/:receiptId", async (req, res) => {
+partsRouter.delete("/:id/receipts/:receiptId", requireRole("ADMIN", "MANAGER", "MECHANIC"), async (req, res) => {
   const [part] = await db.select().from(schema.parts).where(eq(schema.parts.id, req.params.id));
   if (!part || !(await assertMachineInOrg(part.machineId, req.user!.organizationId))) {
     return res.status(404).json({ error: "not found" });
@@ -86,7 +87,7 @@ partsRouter.delete("/:id/receipts/:receiptId", async (req, res) => {
 });
 
 // Mark a part as received — the fulfillment half of order status (ordered vs. received).
-partsRouter.post("/:id/receive", async (req, res) => {
+partsRouter.post("/:id/receive", requireRole("ADMIN", "MANAGER", "MECHANIC"), async (req, res) => {
   const [part] = await db.select().from(schema.parts).where(eq(schema.parts.id, req.params.id));
   if (!part || !(await assertMachineInOrg(part.machineId, req.user!.organizationId))) {
     return res.status(404).json({ error: "not found" });

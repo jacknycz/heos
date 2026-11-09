@@ -11,6 +11,7 @@ import { MilestoneFormScreen } from "../screens/MilestoneFormScreen";
 import { primary } from "../theme/palette";
 import { useHeaderTheme } from "./useHeaderTheme";
 import { DefaultBackButton } from "./DefaultBackButton";
+import { useAuth } from "../auth/AuthContext";
 
 export type MachineRecord = {
   id: string;
@@ -57,6 +58,10 @@ const Stack = createNativeStackNavigator<MachinesStackParamList>();
 
 export function MachinesStack() {
   const header = useHeaderTheme();
+  const { user } = useAuth();
+  // Mirrors the server (see server/src/routes/machines.ts): creating a machine is
+  // fleet-management work, not a mechanic/driver action.
+  const canCreateMachine = user?.role === "ADMIN" || user?.role === "MANAGER";
   return (
     <Stack.Navigator
       screenOptions={{
@@ -71,11 +76,13 @@ export function MachinesStack() {
         component={MachineListScreen}
         options={({ navigation }) => ({
           title: "Fleet",
-          headerRight: () => (
-            <Pressable onPress={() => navigation.navigate("MachineForm", {})} hitSlop={8}>
-              <Ionicons name="add" size={26} color={primary[600]} />
-            </Pressable>
-          ),
+          headerRight: canCreateMachine
+            ? () => (
+                <Pressable onPress={() => navigation.navigate("MachineForm", {})} hitSlop={8}>
+                  <Ionicons name="add" size={26} color={primary[600]} />
+                </Pressable>
+              )
+            : undefined,
         })}
       />
       <Stack.Screen

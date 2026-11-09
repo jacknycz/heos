@@ -4,7 +4,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, schema } from "../db";
 import { assertLocationInOrg, getMachinePassport } from "../lib/machineContext";
 import { evaluateMilestone } from "../lib/milestones";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireRole } from "../lib/auth";
 
 export const machinesRouter = Router();
 machinesRouter.use(requireAuth);
@@ -147,7 +147,8 @@ const createSchema = z.object({
   trackingUnit: z.enum(["hours", "miles"]).optional(),
 });
 
-machinesRouter.post("/", async (req, res) => {
+// Creating/editing machines is fleet composition, not day-to-day logging — same tier as Locations.
+machinesRouter.post("/", requireRole("ADMIN", "MANAGER"), async (req, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
   if (parsed.data.locationId != null && !(await assertLocationInOrg(parsed.data.locationId, req.user!.organizationId))) {
@@ -164,7 +165,7 @@ const updateSchema = createSchema.partial();
 
 // Correcting a machine's identity fields after the fact — this didn't exist until now, so
 // anything wrong at creation (typo'd engine number, missing registration expiry) was permanent.
-machinesRouter.patch("/:id", async (req, res) => {
+machinesRouter.patch("/:id", requireRole("ADMIN", "MANAGER"), async (req, res) => {
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
   if (Object.keys(parsed.data).length === 0) return res.status(400).json({ error: "no fields to update" });

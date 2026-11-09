@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Image, Modal, Pressable, View } from "react-native";
 import { Badge, Button, Card, Text } from "../../ui";
+import { useAuth } from "../../auth/AuthContext";
 
 type Part = {
   id: string;
@@ -25,14 +26,20 @@ export function PartsCostTab({
   onEditPress: (part: Part) => void;
   onMarkReceived: (part: Part) => void;
 }) {
+  const { user } = useAuth();
+  // Mirrors the server (see server/src/routes/parts.ts): ordering/correcting parts is
+  // mechanic-and-up work, not a driver action.
+  const canManage = user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "MECHANIC";
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const total = parts.reduce((sum, p) => sum + p.costCents, 0);
 
   return (
     <View className="gap-3">
-      <View className="flex-row justify-end">
-        <Button size="sm" title="Add New" onPress={onAddPress} />
-      </View>
+      {canManage ? (
+        <View className="flex-row justify-end">
+          <Button size="sm" title="Add New" onPress={onAddPress} />
+        </View>
+      ) : null}
 
       <Card className="flex-row items-center justify-between">
         <Text variant="heading">Total spend</Text>
@@ -62,17 +69,21 @@ export function PartsCostTab({
                 <Text variant="muted">{new Date(p.orderedAt).toLocaleDateString()}</Text>
                 {p.receivedAt ? (
                   <Badge label="Received" tone="success" />
-                ) : (
+                ) : canManage ? (
                   <Pressable onPress={() => onMarkReceived(p)}>
                     <Badge label="Ordered · tap to mark received" tone="warning" />
                   </Pressable>
+                ) : (
+                  <Badge label="Ordered" tone="warning" />
                 )}
               </View>
               <View className="items-end gap-1">
                 <Text variant="body">${(p.costCents / 100).toFixed(2)}</Text>
-                <Pressable onPress={() => onEditPress(p)}>
-                  <Text className="font-semibold text-primary-600">Edit</Text>
-                </Pressable>
+                {canManage ? (
+                  <Pressable onPress={() => onEditPress(p)}>
+                    <Text className="font-semibold text-primary-600">Edit</Text>
+                  </Pressable>
+                ) : null}
               </View>
             </View>
           ))

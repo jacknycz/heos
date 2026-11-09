@@ -62,3 +62,15 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   if (req.user?.role !== "ADMIN") return res.status(403).json({ error: "admin role required" });
   next();
 }
+
+// Must run after requireAuth. Gates a route to a specific set of roles — for actions that
+// should be more open than requireAdmin (e.g. mechanics logging repairs) but still shouldn't be
+// callable by every authenticated user regardless of role.
+export function requireRole(...roles: Role[]) {
+  return function (req: Request, res: Response, next: NextFunction) {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ error: `requires role: ${roles.join(" or ")}` });
+    }
+    next();
+  };
+}

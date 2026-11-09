@@ -2,11 +2,13 @@ import { Router } from "express";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, schema } from "../db";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, requireRole } from "../lib/auth";
 import { assertMachineInOrg } from "../lib/machineContext";
 
 export const repairLogsRouter = Router();
 repairLogsRouter.use(requireAuth);
+// Logging/correcting repairs is mechanic-and-up work — not a driver action.
+repairLogsRouter.use(requireRole("ADMIN", "MANAGER", "MECHANIC"));
 
 const createSchema = z.object({
   machineId: z.string(),
