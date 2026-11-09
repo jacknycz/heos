@@ -35,7 +35,7 @@ export function LoginScreen({ navigation }: Props) {
         </View>
         {formState.errors.root ? <Text className="text-danger-200">{formState.errors.root.message}</Text> : null}
         <FormField control={control} name="email" label="Email" labelClassName="text-white" autoCapitalize="none" keyboardType="email-address" />
-        <FormField control={control} name="password" label="Password" labelClassName="text-white" secureTextEntry />
+        <FormField control={control} name="password" label="Password" labelClassName="text-white" secureToggle />
         <Button title="Log in" variant="fancy" className="mt-4" onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
         <View className="mt-4 gap-2">
           <Button
