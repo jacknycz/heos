@@ -13,7 +13,11 @@
       "distribution": "internal",
       "android": { "buildType": "apk" }
     },
-    "production": {}
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://heos-production-e422.up.railway.app"
+      }
+    }
   },
   "submit": {
     "production": {}
