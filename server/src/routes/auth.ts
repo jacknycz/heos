@@ -6,6 +6,12 @@ import { hashPassword, verifyPassword, signAuthToken, requireAuth } from "../lib
 
 export const authRouter = Router();
 
+// Emails are stored and matched case-insensitively — "Dana@x" and "dana@x" are the same
+// account, since real-world mail systems treat them that way regardless of what RFC 5321
+// technically permits. Normalizing on both write and read keeps the unique constraint and
+// every lookup in agreement.
+const emailSchema = z.string().email().trim().toLowerCase();
+
 function userResponse(user: typeof schema.users.$inferSelect) {
   return { id: user.id, organizationId: user.organizationId, name: user.name, email: user.email, role: user.role };
 }
@@ -15,7 +21,7 @@ authRouter.post("/signup-organization", async (req, res) => {
   const schemaValidator = z.object({
     organizationName: z.string().min(1),
     name: z.string().min(1),
-    email: z.string().email(),
+    email: emailSchema,
     password: z.string().min(8),
   });
   const parsed = schemaValidator.safeParse(req.body);
@@ -40,7 +46,7 @@ authRouter.post("/signup-organization", async (req, res) => {
 });
 
 authRouter.post("/login", async (req, res) => {
-  const schemaValidator = z.object({ email: z.string().email(), password: z.string().min(1) });
+  const schemaValidator = z.object({ email: emailSchema, password: z.string().min(1) });
   const parsed = schemaValidator.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 
@@ -57,7 +63,7 @@ authRouter.post("/accept-invite", async (req, res) => {
   const schemaValidator = z.object({
     code: z.string().min(1),
     name: z.string().min(1),
-    email: z.string().email(),
+    email: emailSchema,
     password: z.string().min(8),
   });
   const parsed = schemaValidator.safeParse(req.body);
