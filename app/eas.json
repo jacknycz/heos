@@ -20,6 +20,7 @@
       }
     },
     "production": {
+      "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_URL": "https://heos-production-e422.up.railway.app"
       }
