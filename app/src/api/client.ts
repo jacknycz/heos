@@ -33,10 +33,32 @@ function authHeaders(): Record<string, string> {
   return authToken ? { authorization: `Bearer ${authToken}` } : {};
 }
 
+// fetch never gives up by itself, so on a weak connection a stalled request left spinners and
+// "Saving…" buttons running forever. Everything now times out. AI calls (chat replies,
+// summaries, transcription) and large uploads (receipt photos) get longer, since they can be
+// legitimately slow even on a good connection.
+const DEFAULT_TIMEOUT_MS = 30_000;
+const SLOW_TIMEOUT_MS = 90_000;
+const SLOW_PATHS = ["/chat/", "/transcribe"];
+
+function timeoutFor(path: string, init: RequestInit) {
+  const largeBody = typeof init.body === "string" && init.body.length > 100_000;
+  return largeBody || SLOW_PATHS.some((p) => path.startsWith(p)) ? SLOW_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+}
+
 async function request(path: string, init: RequestInit): Promise<Response> {
-  const res = await fetch(`${API_BASE_URL}${path}`, { ...init, headers: { ...init.headers, ...authHeaders() } });
-  if (!res.ok) throw new ApiError(await extractErrorMessage(res), res.status);
-  return res;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutFor(path, init));
+  try {
+    const res = await fetch(`${API_BASE_URL}${path}`, { ...init, headers: { ...init.headers, ...authHeaders() }, signal: controller.signal });
+    if (!res.ok) throw new ApiError(await extractErrorMessage(res), res.status);
+    return res;
+  } catch (err) {
+    if (controller.signal.aborted) throw new Error("The request timed out — check your connection and try again.");
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
