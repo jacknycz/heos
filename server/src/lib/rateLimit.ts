@@ -12,3 +12,20 @@ export const authLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "too many attempts, try again in a few minutes" },
 });
+
+// Per-user caps on the endpoints that spend OpenAI credit. Keyed on the signed-in user rather
+// than IP, so one account can't run up the bill and a busy shared yard IP doesn't throttle
+// everyone. Must be mounted after requireAuth.
+function perUserLimiter(windowMs: number, limit: number, what: string) {
+  return rateLimit({
+    windowMs,
+    limit,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    keyGenerator: (req) => req.user!.id,
+    message: { error: `too many ${what} requests, try again in a few minutes` },
+  });
+}
+
+export const chatLimiter = perUserLimiter(10 * MINUTE, 40, "chat");
+export const transcribeLimiter = perUserLimiter(10 * MINUTE, 30, "voice");

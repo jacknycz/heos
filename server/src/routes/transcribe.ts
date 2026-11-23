@@ -3,6 +3,7 @@ import { z } from "zod";
 import { toFile } from "openai";
 import { requireAuth } from "../lib/auth";
 import { getOpenAI } from "../lib/openai";
+import { transcribeLimiter } from "../lib/rateLimit";
 
 export const transcribeRouter = Router();
 transcribeRouter.use(requireAuth);
@@ -26,7 +27,7 @@ const EXTENSION_BY_MIME: Record<string, string> = {
   "audio/ogg": "ogg",
 };
 
-transcribeRouter.post("/", async (req, res) => {
+transcribeRouter.post("/", transcribeLimiter, async (req, res) => {
   const parsed = bodySchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 

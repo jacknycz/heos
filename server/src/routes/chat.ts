@@ -5,6 +5,7 @@ import { db, schema } from "../db";
 import { getMachinePassport, machineContextToPrompt, assertMachineInOrg } from "../lib/machineContext";
 import { getOpenAI, CHAT_MODEL } from "../lib/openai";
 import { requireAuth } from "../lib/auth";
+import { chatLimiter } from "../lib/rateLimit";
 
 export const chatRouter = Router();
 chatRouter.use(requireAuth);
@@ -47,8 +48,17 @@ chatRouter.post("/threads", async (req, res) => {
   res.status(201).json(thread);
 });
 
-chatRouter.post("/threads/:id/messages", async (req, res) => {
-  const schemaValidator = z.object({ role: z.enum(["user", "assistant"]), content: z.string().min(1) });
+// Long enough for a detailed question, short enough that one message can't run up a large bill.
+const MAX_MESSAGE_CHARS = 4000;
+// Only the most recent turns go to the model, so cost per message stays flat however long a
+// thread runs. The machine record in the system prompt carries the long-term context.
+const HISTORY_SENT_TO_MODEL = 20;
+
+chatRouter.post("/threads/:id/messages", chatLimiter, async (req, res) => {
+  // Clients may only add their own (user) turns. Assistant messages are written by the server
+  // alone; accepting them from the client would let a caller forge "prior answers" to steer
+  // the model. `role` is still accepted for compatibility with app builds that send it.
+  const schemaValidator = z.object({ role: z.literal("user").optional(), content: z.string().trim().min(1).max(MAX_MESSAGE_CHARS) });
   const parsed = schemaValidator.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 
@@ -57,18 +67,19 @@ chatRouter.post("/threads/:id/messages", async (req, res) => {
     return res.status(404).json({ error: "not found" });
   }
 
-  const [userMessage] = await db
-    .insert(schema.chatMessages)
-    .values({ threadId: thread.id, role: parsed.data.role, content: parsed.data.content })
-    .returning();
+  const [userMessage] = await db.insert(schema.chatMessages).values({ threadId: thread.id, role: "user", content: parsed.data.content }).returning();
 
-  if (parsed.data.role !== "user") return res.status(201).json([userMessage]);
-
-  const [passport, priorMessages] = await Promise.all([
+  const [passport, recentMessages] = await Promise.all([
     getMachinePassport(thread.machineId, req.user!.organizationId),
-    db.select().from(schema.chatMessages).where(eq(schema.chatMessages.threadId, thread.id)).orderBy(asc(schema.chatMessages.createdAt)),
+    db
+      .select()
+      .from(schema.chatMessages)
+      .where(eq(schema.chatMessages.threadId, thread.id))
+      .orderBy(desc(schema.chatMessages.createdAt))
+      .limit(HISTORY_SENT_TO_MODEL),
   ]);
   if (!passport) return res.status(201).json([userMessage]);
+  const priorMessages = recentMessages.reverse();
 
   let reply: string;
   try {
@@ -90,6 +101,8 @@ chatRouter.post("/threads/:id/messages", async (req, res) => {
   res.status(201).json([userMessage, assistantMessage]);
 });
 
+const SUMMARY_MESSAGE_LIMIT = 60;
+
 const SUMMARY_SYSTEM_PROMPT =
   "You write factual maintenance-log entries summarizing an AI chat conversation about a machine. " +
   "Write in third person, past tense, as a concise factual record — not a reply to anyone, and never " +
@@ -99,7 +112,7 @@ const SUMMARY_SYSTEM_PROMPT =
 // "Save Summary" from the Chat tab — folds every message since the last summary (or the whole
 // thread, if none exists yet) into one third-person log entry that shows up in History. Not
 // automatic (no scheduler in this project); explicit button tap only.
-chatRouter.post("/threads/:id/summary", async (req, res) => {
+chatRouter.post("/threads/:id/summary", chatLimiter, async (req, res) => {
   const [thread] = await db.select().from(schema.chatThreads).where(eq(schema.chatThreads.id, req.params.id));
   if (!thread || !(await assertMachineInOrg(thread.machineId, req.user!.organizationId))) {
     return res.status(404).json({ error: "not found" });
@@ -130,7 +143,12 @@ chatRouter.post("/threads/:id/summary", async (req, res) => {
     return res.status(400).json({ error: "No new messages to summarize since the last summary." });
   }
 
-  const transcript = newMessages.map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n\n");
+  // Bounded the same way as replies: the summary still covers through the newest message, but
+  // a very long unsummarized stretch can't produce an arbitrarily large prompt.
+  const transcript = newMessages
+    .slice(-SUMMARY_MESSAGE_LIMIT)
+    .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+    .join("\n\n");
 
   let summaryText: string;
   try {
