@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { Image, Modal, Pressable, View } from "react-native";
+import { ActivityIndicator, Image, Modal, Pressable, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Badge, Button, Card, Text } from "../../ui";
 import { useAuth } from "../../auth/AuthContext";
+import { apiGet } from "../../api/client";
+import { neutral, white } from "../../theme/palette";
 
 type Part = {
   id: string;
@@ -10,7 +13,8 @@ type Part = {
   costCents: number;
   orderedAt: string;
   receivedAt: string | null;
-  receipts: { id: string; image: string }[];
+  // Ids only; the image itself is fetched when a receipt is opened (see openReceipt).
+  receipts: { id: string }[];
 };
 
 // Every part/order tied to this machine, plus a running total — the concrete "what has this
@@ -30,7 +34,19 @@ export function PartsCostTab({
   // Mirrors the server (see server/src/routes/parts.ts): ordering/correcting parts is
   // mechanic-and-up work, not a driver action.
   const canManage = user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "MECHANIC";
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  // null = closed; open with image null = still loading; error set = couldn't load it.
+  const [preview, setPreview] = useState<{ image: string | null; error?: string } | null>(null);
+
+  async function openReceipt(partId: string, receiptId: string) {
+    setPreview({ image: null });
+    try {
+      const receipt = await apiGet<{ image: string }>(`/parts/${partId}/receipts/${receiptId}`);
+      setPreview((current) => (current ? { image: receipt.image } : current));
+    } catch (err) {
+      setPreview((current) => (current ? { image: null, error: err instanceof Error ? err.message : "Couldn't load this receipt" } : current));
+    }
+  }
+
   const total = parts.reduce((sum, p) => sum + p.costCents, 0);
 
   return (
@@ -54,19 +70,26 @@ export function PartsCostTab({
         ) : (
           parts.map((p) => (
             <View key={p.id} className="flex-row items-center gap-3">
-              {p.receipts.length > 0 ? (
-                <View className="flex-row gap-1">
-                  {p.receipts.slice(0, 3).map((r) => (
-                    <Pressable key={r.id} onPress={() => setPreviewImage(r.image)}>
-                      <Image source={{ uri: r.image }} className="size-10 rounded-card border border-neutral-300 dark:border-neutral-700" />
-                    </Pressable>
-                  ))}
-                </View>
-              ) : null}
               <View className="flex-1 gap-1">
                 <Text variant="body">{p.partNumber}</Text>
                 {p.description ? <Text variant="muted">{p.description}</Text> : null}
                 <Text variant="muted">{new Date(p.orderedAt).toLocaleDateString()}</Text>
+                {p.receipts.length > 0 ? (
+                  <View className="flex-row flex-wrap gap-1">
+                    {p.receipts.map((r, i) => (
+                      <Pressable
+                        key={r.id}
+                        onPress={() => openReceipt(p.id, r.id)}
+                        className="flex-row items-center gap-1 rounded-full bg-neutral-100 px-2 py-1 active:opacity-60 dark:bg-neutral-800"
+                      >
+                        <Ionicons name="receipt-outline" size={14} color={neutral[500]} />
+                        <Text variant="muted" className="text-xs">
+                          Receipt {i + 1}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null}
                 {p.receivedAt ? (
                   <Badge label="Received" tone="success" />
                 ) : canManage ? (
@@ -90,9 +113,15 @@ export function PartsCostTab({
         )}
       </Card>
 
-      <Modal visible={!!previewImage} transparent animationType="fade" onRequestClose={() => setPreviewImage(null)}>
-        <Pressable className="flex-1 items-center justify-center bg-black/80" onPress={() => setPreviewImage(null)}>
-          {previewImage ? <Image source={{ uri: previewImage }} className="h-4/5 w-11/12" resizeMode="contain" /> : null}
+      <Modal visible={!!preview} transparent animationType="fade" onRequestClose={() => setPreview(null)}>
+        <Pressable className="flex-1 items-center justify-center bg-black/80" onPress={() => setPreview(null)}>
+          {preview?.image ? (
+            <Image source={{ uri: preview.image }} className="h-4/5 w-11/12" resizeMode="contain" />
+          ) : preview?.error ? (
+            <Text className="text-white">{preview.error}</Text>
+          ) : (
+            <ActivityIndicator color={white} />
+          )}
         </Pressable>
       </Modal>
     </View>

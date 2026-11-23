@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db, schema } from "../db";
 import { requireAuth, requireRole } from "../lib/auth";
 import { assertMachineInOrg } from "../lib/machineContext";
@@ -78,6 +78,35 @@ partsRouter.post("/:id/receipts", requireRole("ADMIN", "MANAGER", "MECHANIC"), a
 
   const [receipt] = await db.insert(schema.partReceipts).values({ partId: part.id, image: parsed.data.image }).returning();
   res.status(201).json(receipt);
+});
+
+// A part's receipt images, for editing it (the passport only lists receipt ids). Readable by
+// any role, like the rest of the passport.
+partsRouter.get("/:id/receipts", async (req, res) => {
+  const [part] = await db.select().from(schema.parts).where(eq(schema.parts.id, req.params.id));
+  if (!part || !(await assertMachineInOrg(part.machineId, req.user!.organizationId))) {
+    return res.status(404).json({ error: "not found" });
+  }
+  const receipts = await db
+    .select()
+    .from(schema.partReceipts)
+    .where(eq(schema.partReceipts.partId, part.id))
+    .orderBy(asc(schema.partReceipts.createdAt));
+  res.json(receipts);
+});
+
+// One receipt image, fetched when someone opens it from the passport.
+partsRouter.get("/:id/receipts/:receiptId", async (req, res) => {
+  const [part] = await db.select().from(schema.parts).where(eq(schema.parts.id, req.params.id));
+  if (!part || !(await assertMachineInOrg(part.machineId, req.user!.organizationId))) {
+    return res.status(404).json({ error: "not found" });
+  }
+  const [receipt] = await db
+    .select()
+    .from(schema.partReceipts)
+    .where(and(eq(schema.partReceipts.id, req.params.receiptId), eq(schema.partReceipts.partId, part.id)));
+  if (!receipt) return res.status(404).json({ error: "not found" });
+  res.json(receipt);
 });
 
 partsRouter.delete("/:id/receipts/:receiptId", requireRole("ADMIN", "MANAGER", "MECHANIC"), async (req, res) => {

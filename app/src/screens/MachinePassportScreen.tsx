@@ -44,7 +44,7 @@ type Passport = {
     costCents: number;
     orderedAt: string;
     receivedAt: string | null;
-    receipts: { id: string; image: string }[];
+    receipts: { id: string }[];
   }[];
   milestones: Milestone[];
   chatSummaries: { id: string; summary: string; coveredThroughMessageId: string; createdAt: string }[];

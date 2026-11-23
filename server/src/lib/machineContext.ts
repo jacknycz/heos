@@ -50,8 +50,16 @@ export async function getMachinePassport(machineId: string, organizationId: stri
   ]);
 
   const partIds = partRows.map((p) => p.id);
+  // Receipt ids only, not the images: images are base64 data URLs stored inline, so including
+  // them made every passport load (and every refetch after closing a sheet) download every
+  // receipt photo the machine has, potentially tens of MB. The app fetches an image only when
+  // one is opened, via GET /parts/:id/receipts/:receiptId.
   const receiptRows = partIds.length
-    ? await db.select().from(schema.partReceipts).where(inArray(schema.partReceipts.partId, partIds)).orderBy(asc(schema.partReceipts.createdAt))
+    ? await db
+        .select({ id: schema.partReceipts.id, partId: schema.partReceipts.partId, createdAt: schema.partReceipts.createdAt })
+        .from(schema.partReceipts)
+        .where(inArray(schema.partReceipts.partId, partIds))
+        .orderBy(asc(schema.partReceipts.createdAt))
     : [];
   const receiptsByPart = new Map<string, typeof receiptRows>();
   for (const r of receiptRows) {

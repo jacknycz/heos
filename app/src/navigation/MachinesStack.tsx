@@ -44,7 +44,6 @@ export type MachinesStackParamList = {
       partNumber: string;
       description?: string | null;
       costCents: number;
-      receipts: { id: string; image: string }[];
     };
   };
   MilestoneForm: {

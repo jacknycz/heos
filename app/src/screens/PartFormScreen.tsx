@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { MachinesStackParamList } from "../navigation/MachinesStack";
-import { apiDelete, apiPatch, apiPost } from "../api/client";
+import { apiDelete, apiGet, apiPatch, apiPost } from "../api/client";
 import { partSchema, type PartFormValues } from "../schemas/logs";
 import { Screen, FormField, PriceField, ReceiptsField, type ReceiptItem, Button, Text } from "../ui";
 
@@ -11,7 +11,18 @@ type Props = NativeStackScreenProps<MachinesStackParamList, "PartForm">;
 
 export function PartFormScreen({ route, navigation }: Props) {
   const { machineId, part } = route.params;
-  const [receipts, setReceipts] = useState<ReceiptItem[]>(part?.receipts ?? []);
+  const [receipts, setReceipts] = useState<ReceiptItem[]>([]);
+  const [receiptsError, setReceiptsError] = useState<string | null>(null);
+
+  // The passport only carries receipt ids, so an existing part's images are fetched here, once,
+  // when its edit form opens.
+  useEffect(() => {
+    if (!part) return;
+    apiGet<{ id: string; image: string }[]>(`/parts/${part.id}/receipts`)
+      .then((rows) => setReceipts(rows.map((r) => ({ id: r.id, image: r.image }))))
+      .catch((err) => setReceiptsError(err instanceof Error ? err.message : "Couldn't load receipts"));
+  }, [part]);
+
   const { control, handleSubmit, formState, setError } = useForm<PartFormValues>({
     resolver: zodResolver(partSchema),
     defaultValues: {
@@ -77,6 +88,7 @@ export function PartFormScreen({ route, navigation }: Props) {
       <FormField control={control} name="partNumber" label="Part number" placeholder="e.g. AF-2210" />
       <FormField control={control} name="description" label="Description (optional)" />
       <PriceField control={control} name="cost" label="Cost" />
+      {receiptsError ? <Text className="text-danger-600">{receiptsError}</Text> : null}
       <ReceiptsField items={receipts} onAdd={handleAddReceipt} onRemove={handleRemoveReceipt} />
       <Button title={part ? "Save changes" : "Add Part"} onPress={() => handleSubmit(onSubmit)()} loading={formState.isSubmitting} />
     </Screen>
