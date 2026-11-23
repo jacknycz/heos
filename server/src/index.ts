@@ -14,14 +14,19 @@ import { partsRouter } from "./routes/parts";
 import { milestonesRouter } from "./routes/milestones";
 import { chatRouter } from "./routes/chat";
 import { transcribeRouter } from "./routes/transcribe";
+import { authLimiter } from "./lib/rateLimit";
 
 const app = express();
+// Railway terminates requests at one edge proxy, so the client's real IP is the last hop in
+// X-Forwarded-For — rate limiting would otherwise see every request as coming from the proxy.
+app.set("trust proxy", 1);
 app.use(cors());
 // Default 100kb is too small for a receipt photo posted as a base64 data URL.
 app.use(express.json({ limit: "10mb" }));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
+app.use(["/auth/login", "/auth/signup-organization", "/auth/accept-invite"], authLimiter);
 app.use("/auth", authRouter);
 app.use("/users", usersRouter);
 app.use("/locations", locationsRouter);
