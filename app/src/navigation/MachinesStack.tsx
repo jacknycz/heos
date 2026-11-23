@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { HeaderBackButton } from "@react-navigation/elements";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,7 +11,7 @@ import { PartFormScreen } from "../screens/PartFormScreen";
 import { MilestoneFormScreen } from "../screens/MilestoneFormScreen";
 import { primary } from "../theme/palette";
 import { useHeaderTheme } from "./useHeaderTheme";
-import { DefaultBackButton } from "./DefaultBackButton";
+import { backButtonOptions } from "./DefaultBackButton";
 import { HeaderIconButton } from "./HeaderIconButton";
 import { useAuth } from "../auth/AuthContext";
 
@@ -68,7 +69,7 @@ export function MachinesStack() {
         headerStyle: { backgroundColor: header.background },
         headerTintColor: header.text,
         headerTitleStyle: { color: header.text },
-        headerLeft: DefaultBackButton,
+        ...backButtonOptions,
       }}
     >
       <Stack.Screen
@@ -95,20 +96,26 @@ export function MachinesStack() {
           // Placeholder until the passport loads, then MachinePassportScreen's own
           // useLayoutEffect overwrites this with the machine's real name + subtitle.
           title: "Loading…",
-          // Reached directly from the Dashboard's "recent machines" links too, which land here
-          // as the only route in this stack. navigation.canGoBack() isn't reliable for deciding
-          // where to go — it bubbles up to the tab navigator's own back-history, so it reports
-          // true and goBack() would switch to the previously-focused tab (Dashboard) instead of
-          // popping here. Check this stack's own depth instead.
-          headerLeft: () => (
-            <HeaderBackButton
-              onPress={() =>
-                navigation.getState().index > 0 ? navigation.goBack() : navigation.reset({ index: 0, routes: [{ name: "MachineList" }] })
-              }
-              labelVisible={false}
-              backImage={() => <Ionicons name="chevron-back" size={22} color={primary[600]} />}
-            />
-          ),
+          // The Dashboard's links navigate here with `initial: false`, so the Fleet list is always
+          // underneath and a plain back works. That's what iOS relies on: it uses the native back
+          // button from backButtonOptions, since custom bar views don't take taps on iOS 26.
+          // Elsewhere this custom button stays as a safety net in case the passport is ever the
+          // only route in this stack: navigation.canGoBack() can't be trusted there (it bubbles
+          // up to the tab navigator, so goBack() would jump to the Dashboard tab), so it checks
+          // this stack's own depth instead.
+          ...(Platform.OS === "ios"
+            ? {}
+            : {
+                headerLeft: () => (
+                  <HeaderBackButton
+                    onPress={() =>
+                      navigation.getState().index > 0 ? navigation.goBack() : navigation.reset({ index: 0, routes: [{ name: "MachineList" }] })
+                    }
+                    labelVisible={false}
+                    backImage={() => <Ionicons name="chevron-back" size={22} color={primary[600]} />}
+                  />
+                ),
+              }),
         })}
       />
       <Stack.Screen

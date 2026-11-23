@@ -106,7 +106,7 @@ export function DashboardScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const { height } = useWindowDimensions();
-  const openMilestones = (m: Machine) => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } });
+  const openMilestones = (m: Machine) => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id }, initial: false });
 
   const fetchAll = useCallback(() => {
     setError(false);
@@ -213,7 +213,10 @@ export function DashboardScreen({ navigation }: Props) {
             ) : (
               <View className="gap-2">
                 {recentMachines.map((m) => (
-                  <Pressable key={m.id} onPress={() => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id } })}>
+                  <Pressable
+                    key={m.id}
+                    onPress={() => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id }, initial: false })}
+                  >
                     <Card className="flex-row items-center justify-between">
                       <View>
                         <Text variant="heading">{m.name}</Text>

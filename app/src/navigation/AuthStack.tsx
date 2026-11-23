@@ -2,7 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { LoginScreen } from "../screens/auth/LoginScreen";
 import { CreateOrganizationScreen } from "../screens/auth/CreateOrganizationScreen";
 import { AcceptInviteScreen } from "../screens/auth/AcceptInviteScreen";
-import { DefaultBackButton } from "./DefaultBackButton";
+import { backButtonOptions } from "./DefaultBackButton";
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -16,7 +16,7 @@ export function AuthStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerLeft: DefaultBackButton,
+        ...backButtonOptions,
       }}
     >
       <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />

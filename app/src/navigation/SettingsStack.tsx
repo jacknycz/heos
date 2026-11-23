@@ -4,7 +4,7 @@ import { TeamScreen } from "../screens/TeamScreen";
 import { LocationsScreen } from "../screens/LocationsScreen";
 import { LocationFormScreen } from "../screens/LocationFormScreen";
 import { useHeaderTheme } from "./useHeaderTheme";
-import { DefaultBackButton } from "./DefaultBackButton";
+import { backButtonOptions } from "./DefaultBackButton";
 import { HeaderIconButton } from "./HeaderIconButton";
 
 export type SettingsStackParamList = {
@@ -25,7 +25,7 @@ export function SettingsStack() {
         headerStyle: { backgroundColor: header.background },
         headerTintColor: header.text,
         headerTitleStyle: { color: header.text },
-        headerLeft: DefaultBackButton,
+        ...backButtonOptions,
       }}
     >
       <Stack.Screen name="SettingsHome" component={SettingsScreen} />
