@@ -1,13 +1,11 @@
-import { Pressable } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { TeamScreen } from "../screens/TeamScreen";
 import { LocationsScreen } from "../screens/LocationsScreen";
 import { LocationFormScreen } from "../screens/LocationFormScreen";
-import { primary } from "../theme/palette";
 import { useHeaderTheme } from "./useHeaderTheme";
 import { DefaultBackButton } from "./DefaultBackButton";
+import { HeaderIconButton } from "./HeaderIconButton";
 
 export type SettingsStackParamList = {
   SettingsHome: undefined;
@@ -38,9 +36,7 @@ export function SettingsStack() {
         options={({ navigation }) => ({
           title: "Locations",
           headerRight: () => (
-            <Pressable onPress={() => navigation.navigate("LocationForm", {})} hitSlop={8}>
-              <Ionicons name="add" size={26} color={primary[600]} />
-            </Pressable>
+            <HeaderIconButton icon="add" accessibilityLabel="Add location" onPress={() => navigation.navigate("LocationForm", {})} />
           ),
         })}
       />

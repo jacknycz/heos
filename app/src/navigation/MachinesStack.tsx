@@ -1,4 +1,4 @@
-import { Pressable } from "react-native";
+import { HeaderBackButton } from "@react-navigation/elements";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { MachineListScreen } from "../screens/MachineListScreen";
@@ -11,6 +11,7 @@ import { MilestoneFormScreen } from "../screens/MilestoneFormScreen";
 import { primary } from "../theme/palette";
 import { useHeaderTheme } from "./useHeaderTheme";
 import { DefaultBackButton } from "./DefaultBackButton";
+import { HeaderIconButton } from "./HeaderIconButton";
 import { useAuth } from "../auth/AuthContext";
 
 export type MachineRecord = {
@@ -77,11 +78,7 @@ export function MachinesStack() {
         options={({ navigation }) => ({
           title: "Fleet",
           headerRight: canCreateMachine
-            ? () => (
-                <Pressable onPress={() => navigation.navigate("MachineForm", {})} hitSlop={8}>
-                  <Ionicons name="add" size={26} color={primary[600]} />
-                </Pressable>
-              )
+            ? () => <HeaderIconButton icon="add" accessibilityLabel="Add machine" onPress={() => navigation.navigate("MachineForm", {})} />
             : undefined,
         })}
       />
@@ -105,15 +102,13 @@ export function MachinesStack() {
           // true and goBack() would switch to the previously-focused tab (Dashboard) instead of
           // popping here. Check this stack's own depth instead.
           headerLeft: () => (
-            <Pressable
+            <HeaderBackButton
               onPress={() =>
                 navigation.getState().index > 0 ? navigation.goBack() : navigation.reset({ index: 0, routes: [{ name: "MachineList" }] })
               }
-              hitSlop={8}
-              className="py-1 pl-4 pr-2"
-            >
-              <Ionicons name="chevron-back" size={22} color={primary[600]} />
-            </Pressable>
+              labelVisible={false}
+              backImage={() => <Ionicons name="chevron-back" size={22} color={primary[600]} />}
+            />
           ),
         })}
       />
