@@ -2,9 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollView, TextInput, View, type ScrollViewInstance } from "react-native";
 import clsx from "clsx";
 import { apiGet, apiPost } from "../../api/client";
-import { Text, Button, EmptyState } from "../../ui";
+import { Text, Button, EmptyState, Tabs } from "../../ui";
+import { useAuth } from "../../auth/AuthContext";
+import { RepairLogForm } from "../RepairLogFormScreen";
+import { DriverNoteForm } from "../DriverNoteFormScreen";
 import { neutral } from "../../theme/palette";
 
+type RecordKind = "repair" | "note";
 type Message = { id: string; role: "user" | "assistant"; content: string; addedToRecord?: boolean };
 
 const BUBBLE: Record<Message["role"], string> = {
@@ -20,7 +24,11 @@ const BUBBLE_TEXT: Record<Message["role"], string> = {
 // machine's existing thread on mount instead of starting a fresh, empty one every time this
 // tab is opened — the standalone screen this replaced kept threadId only in local state, so
 // leaving and coming back silently lost the whole conversation.
-export function ChatTab({ machineId, onSummarySaved }: { machineId: string; onSummarySaved: () => void }) {
+export function ChatTab({ machineId, onSummarySaved, onRecordAdded }: { machineId: string; onSummarySaved: () => void; onRecordAdded: () => void }) {
+  const { user } = useAuth();
+  const canLogRepair = user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "MECHANIC";
+  // Set while an assistant answer is being turned into a repair log or driver note.
+  const [recording, setRecording] = useState<{ messageId: string; kind: RecordKind } | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -66,9 +74,17 @@ export function ChatTab({ machineId, onSummarySaved }: { machineId: string; onSu
     }
   }
 
-  async function addToRecord(messageId: string) {
-    const updated = await apiPost<Message>(`/chat/messages/${messageId}/add-to-record`, {});
-    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, addedToRecord: updated.addedToRecord } : m)));
+  // Called once the repair/note form below has actually saved the entry: flags the message as
+  // recorded (and keeps its as-is AI log), then returns to the conversation.
+  async function finishRecording(messageId: string) {
+    setRecording(null);
+    onRecordAdded();
+    try {
+      const updated = await apiPost<Message>(`/chat/messages/${messageId}/add-to-record`, {});
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, addedToRecord: updated.addedToRecord } : m)));
+    } catch {
+      // The entry itself is saved; only the "Added to record" marker failed, so don't alarm anyone.
+    }
   }
 
   async function saveSummary() {
@@ -84,6 +100,36 @@ export function ChatTab({ machineId, onSummarySaved }: { machineId: string; onSu
     } finally {
       setSummarizing(false);
     }
+  }
+
+  // "Add this update to the record": the answer becomes a real repair log or driver note, opened in
+  // the same form used elsewhere, pre-filled and editable before it's saved. Drivers can't log
+  // repairs (the server enforces that too), so they only get the note option.
+  if (recording) {
+    const message = messages.find((m) => m.id === recording.messageId);
+    return (
+      <View className="flex-1 gap-3">
+        <View className="flex-row items-center justify-between">
+          <Text variant="heading">Add to record</Text>
+          <Button size="sm" variant="ghost" title="Back to chat" onPress={() => setRecording(null)} />
+        </View>
+        {canLogRepair ? (
+          <Tabs
+            tabs={[
+              { key: "repair", label: "Repair" },
+              { key: "note", label: "Driver Note" },
+            ]}
+            activeKey={recording.kind}
+            onChange={(key) => setRecording({ ...recording, kind: key as RecordKind })}
+          />
+        ) : null}
+        {recording.kind === "repair" ? (
+          <RepairLogForm machineId={machineId} initialText={message?.content} onDone={() => finishRecording(recording.messageId)} />
+        ) : (
+          <DriverNoteForm machineId={machineId} initialText={message?.content} onDone={() => finishRecording(recording.messageId)} />
+        )}
+      </View>
+    );
   }
 
   // Only the message list scrolls; the summary button sits above it and the composer stays pinned
@@ -120,7 +166,12 @@ export function ChatTab({ machineId, onSummarySaved }: { machineId: string; onSu
                     Added to record
                   </Text>
                 ) : (
-                  <Button size="sm" variant="ghost" title="Add this update to the record" onPress={() => addToRecord(item.id)} />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="Add this update to the record"
+                    onPress={() => setRecording({ messageId: item.id, kind: canLogRepair ? "repair" : "note" })}
+                  />
                 )
               ) : null}
             </View>

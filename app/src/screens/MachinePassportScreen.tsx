@@ -261,7 +261,7 @@ export function MachinePassportScreen({ route, navigation }: Props) {
         <DiagnosticsForm machineId={machineId} onDone={finishSheet} />
       </Sheet>
       <Sheet visible={activeSheet === "chat"} title="Ask about this machine" onClose={closeSheet}>
-        <ChatTab machineId={machineId} onSummarySaved={refetch} />
+        <ChatTab machineId={machineId} onSummarySaved={refetch} onRecordAdded={refetch} />
       </Sheet>
     </View>
   );

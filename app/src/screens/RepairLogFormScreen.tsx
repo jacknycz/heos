@@ -11,11 +11,22 @@ type RepairLog = { id: string; description: string; costCents: number };
 
 // The repair-log form itself. Used both in the passport's sheet (new entries) and by the full-screen
 // route below (editing an entry from History), so the form only lives in one place.
-export function RepairLogForm({ machineId, repairLog, onDone }: { machineId: string; repairLog?: RepairLog; onDone: () => void }) {
+// `initialText` pre-fills a new entry's description (e.g. from an AI chat answer), still editable.
+export function RepairLogForm({
+  machineId,
+  repairLog,
+  initialText,
+  onDone,
+}: {
+  machineId: string;
+  repairLog?: RepairLog;
+  initialText?: string;
+  onDone: () => void;
+}) {
   const { control, handleSubmit, formState, setError } = useForm<RepairLogFormValues>({
     resolver: zodResolver(repairLogSchema),
     defaultValues: {
-      description: repairLog?.description ?? "",
+      description: repairLog?.description ?? initialText ?? "",
       cost: repairLog ? (repairLog.costCents / 100).toFixed(2) : "",
     },
   });
