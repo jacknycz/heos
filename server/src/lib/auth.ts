@@ -51,7 +51,9 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   }
 
   const [user] = await db.select().from(schema.users).where(eq(schema.users.id, payload.id));
-  if (!user) return res.status(401).json({ error: "user not found" });
+  // A removed user's still-valid token stops working on their very next request, since the user
+  // row is re-read here every time rather than trusted from the token.
+  if (!user || user.disabledAt) return res.status(401).json({ error: "user not found" });
 
   req.user = { id: user.id, organizationId: user.organizationId, role: user.role };
   next();

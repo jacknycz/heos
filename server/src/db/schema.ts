@@ -28,6 +28,9 @@ export const users = pgTable("users", {
   // Expo push token, registered on login when the user grants notification permission — null
   // until then, or on web (no push support there). One token per user, last-login-wins.
   pushToken: text("push_token"),
+  // Set when an admin removes this user. The row is kept (their repair logs, notes and chat
+  // threads still reference it), but they can no longer sign in or use an existing token.
+  disabledAt: timestamp("disabled_at"),
   createdAt: createdAt(),
 });
 

@@ -51,7 +51,7 @@ authRouter.post("/login", async (req, res) => {
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 
   const [user] = await db.select().from(schema.users).where(eq(schema.users.email, parsed.data.email));
-  if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+  if (!user || user.disabledAt || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
     return res.status(401).json({ error: "invalid email or password" });
   }
 

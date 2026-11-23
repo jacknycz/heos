@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { randomBytes } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "../db";
 import { requireAuth, requireAdmin } from "../lib/auth";
 
@@ -24,7 +24,7 @@ usersRouter.get("/", async (req, res) => {
   const rows = await db
     .select({ id: schema.users.id, name: schema.users.name, email: schema.users.email, role: schema.users.role, createdAt: schema.users.createdAt })
     .from(schema.users)
-    .where(eq(schema.users.organizationId, req.user!.organizationId));
+    .where(and(eq(schema.users.organizationId, req.user!.organizationId), isNull(schema.users.disabledAt)));
   res.json(rows);
 });
 
@@ -46,19 +46,44 @@ usersRouter.patch("/:id/role", requireAdmin, async (req, res) => {
   const [target] = await db
     .select()
     .from(schema.users)
-    .where(and(eq(schema.users.id, req.params.id), eq(schema.users.organizationId, req.user!.organizationId)));
+    .where(and(eq(schema.users.id, req.params.id), eq(schema.users.organizationId, req.user!.organizationId), isNull(schema.users.disabledAt)));
   if (!target) return res.status(404).json({ error: "not found" });
 
   if (target.role === "ADMIN" && parsed.data.role !== "ADMIN") {
     const admins = await db
       .select({ id: schema.users.id })
       .from(schema.users)
-      .where(and(eq(schema.users.organizationId, req.user!.organizationId), eq(schema.users.role, "ADMIN")));
+      .where(and(eq(schema.users.organizationId, req.user!.organizationId), eq(schema.users.role, "ADMIN"), isNull(schema.users.disabledAt)));
     if (admins.length <= 1) return res.status(409).json({ error: "organization must keep at least one admin" });
   }
 
   const [updated] = await db.update(schema.users).set({ role: parsed.data.role }).where(eq(schema.users.id, target.id)).returning();
   res.json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
+});
+
+// Admin-only: remove a teammate from the organization. Disables rather than deletes, since their
+// repair logs, notes and chat threads still reference them; requireAuth rejects a disabled user
+// on their next request, so access ends immediately, not when their token expires.
+usersRouter.delete("/:id", requireAdmin, async (req, res) => {
+  if (req.params.id === req.user!.id) return res.status(400).json({ error: "you can't remove yourself" });
+
+  const [target] = await db
+    .select()
+    .from(schema.users)
+    .where(and(eq(schema.users.id, req.params.id), eq(schema.users.organizationId, req.user!.organizationId), isNull(schema.users.disabledAt)));
+  if (!target) return res.status(404).json({ error: "not found" });
+
+  if (target.role === "ADMIN") {
+    const admins = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(and(eq(schema.users.organizationId, req.user!.organizationId), eq(schema.users.role, "ADMIN"), isNull(schema.users.disabledAt)));
+    if (admins.length <= 1) return res.status(409).json({ error: "organization must keep at least one admin" });
+  }
+
+  // Clearing the push token stops milestone alerts going to a device they may still hold.
+  await db.update(schema.users).set({ disabledAt: new Date(), pushToken: null }).where(eq(schema.users.id, target.id));
+  res.status(204).send();
 });
 
 // Admin-only: mint a one-time code a new teammate can redeem via POST /auth/accept-invite.

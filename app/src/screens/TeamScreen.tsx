@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { FlatList, View } from "react-native";
-import { apiGet, apiPatch, apiPost } from "../api/client";
+import { apiDelete, apiGet, apiPatch, apiPost } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import type { Role } from "../auth/AuthContext";
-import { Screen, Text, Button, Badge, Card } from "../ui";
+import { Screen, Text, Button, Badge, Card, ConfirmDialog } from "../ui";
 
 type Member = { id: string; name: string; email: string; role: Role };
 const ROLES: Role[] = ["ADMIN", "MANAGER", "MECHANIC", "DRIVER"];
@@ -21,6 +21,7 @@ export function TeamScreen() {
   const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [pendingRemoval, setPendingRemoval] = useState<Member | null>(null);
 
   const load = useCallback(() => {
     apiGet<Member[]>("/users")
@@ -41,6 +42,17 @@ export function TeamScreen() {
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not change role");
+    }
+  }
+
+  async function removeMember(member: Member) {
+    setPendingRemoval(null);
+    setError(null);
+    try {
+      await apiDelete(`/users/${member.id}`);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not remove teammate");
     }
   }
 
@@ -105,9 +117,18 @@ export function TeamScreen() {
               {ROLES.filter((r) => r !== item.role).map((r) => (
                 <Button key={r} size="sm" variant="outline" title={`Make ${r}`} onPress={() => changeRole(item.id, r)} />
               ))}
+              {item.id !== user.id ? <Button size="sm" variant="danger" title="Remove" onPress={() => setPendingRemoval(item)} /> : null}
             </View>
           </Card>
         )}
+      />
+      <ConfirmDialog
+        visible={!!pendingRemoval}
+        title={pendingRemoval ? `Remove ${pendingRemoval.name}?` : ""}
+        message="They'll be signed out right away and won't be able to sign back in. Their past repair logs and notes stay on record."
+        confirmLabel="Remove"
+        onCancel={() => setPendingRemoval(null)}
+        onConfirm={() => pendingRemoval && removeMember(pendingRemoval)}
       />
     </Screen>
   );

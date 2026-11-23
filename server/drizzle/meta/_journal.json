@@ -78,6 +78,13 @@
       "when": 1791325014899,
       "tag": "0010_furry_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795464669868,
+      "tag": "0011_amusing_kingpin",
+      "breakpoints": true
     }
   ]
 }
