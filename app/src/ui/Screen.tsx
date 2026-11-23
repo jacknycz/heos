@@ -1,5 +1,6 @@
-import { ScrollView, StyleSheet, View, type ViewProps } from "react-native";
+import { Platform, ScrollView, StyleSheet, View, type ViewProps } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
+import { SafeAreaView as StackScreenSafeAreaView } from "react-native-screens/experimental";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColorScheme } from "nativewind";
 import clsx from "clsx";
@@ -41,20 +42,33 @@ export function Screen({
   const gradientFrom = dark ? primary[500] : primary[700];
   const gradientFadeLocation = dark ? 0.3 : 0.5;
 
+  const body = scroll ? (
+    <ScrollView className="flex-1" contentContainerClassName={clsx(padded && "gap-6 p-4", className)} {...(props as object)}>
+      {children}
+    </ScrollView>
+  ) : (
+    <View className={clsx("flex-1", padded && "gap-6 p-4", className)} {...props}>
+      {children}
+    </View>
+  );
+
+  // Screens behind a native-stack header leave "top" out of `edges` (see above). But on iOS 26+,
+  // react-native-screens lays every stack screen out *underneath* the navigation bar, even an
+  // opaque one, and expects the navigator to inset the content. React Navigation 7 does that;
+  // the v6 native-stack this app uses predates it, so without this the top of every such screen
+  // (Quick Actions, a form's first field) rendered hidden under the header. This applies the same
+  // inset React Navigation 7 does: react-native-screens' SafeAreaView reads the stack screen's own
+  // insets, which include the bar. (react-native-safe-area-context's SafeAreaView above reads the
+  // app-root provider, which only knows about the status bar.) On iOS < 26 the screen starts below
+  // the bar, so the inset is 0 there and this is a no-op.
+  const insetBelowHeader = Platform.OS === "ios" && !edges.includes("top");
+
   return (
     <SafeAreaView edges={edges} className={clsx("flex-1", BACKGROUND_CLASSES[background])}>
       {topGradient ? (
         <LinearGradient colors={[gradientFrom, fadeTo, fadeTo]} locations={[0, gradientFadeLocation, 1]} style={StyleSheet.absoluteFill} />
       ) : null}
-      {scroll ? (
-        <ScrollView className="flex-1" contentContainerClassName={clsx(padded && "gap-6 p-4", className)} {...(props as object)}>
-          {children}
-        </ScrollView>
-      ) : (
-        <View className={clsx("flex-1", padded && "gap-6 p-4", className)} {...props}>
-          {children}
-        </View>
-      )}
+      {insetBelowHeader ? <StackScreenSafeAreaView edges={{ top: true }}>{body}</StackScreenSafeAreaView> : body}
     </SafeAreaView>
   );
 }
