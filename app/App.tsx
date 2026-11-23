@@ -10,13 +10,24 @@ import { RootNavigator } from "./src/navigation/RootNavigator";
 import { DesignSystemScreen } from "./src/screens/DesignSystemScreen";
 import { applyStoredColorScheme } from "./src/theme/colorScheme";
 import { primary } from "./src/theme/palette";
+import { Button, EmptyState } from "./src/ui";
 
 function Gate() {
-  const { user, loading } = useAuth();
+  const { user, loading, restoreFailed, retryRestore, logout } = useAuth();
   if (loading) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50">
         <ActivityIndicator color={primary[600]} />
+      </View>
+    );
+  }
+  // Saved session, but the server couldn't be reached to confirm it: keep the session and let
+  // them retry, rather than dropping them to the login screen just for being out of signal.
+  if (!user && restoreFailed) {
+    return (
+      <View className="flex-1 justify-center gap-4 bg-neutral-50 p-6 dark:bg-neutral-950">
+        <EmptyState title="Can't reach HEOS" subtitle="Check your connection — you're still signed in." onRetry={retryRestore} />
+        <Button variant="ghost" title="Sign out instead" onPress={logout} />
       </View>
     );
   }

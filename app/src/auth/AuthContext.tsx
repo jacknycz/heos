@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiGet, apiPatch, apiPost, setAuthToken } from "../api/client";
+import { ApiError, apiGet, apiPatch, apiPost, setAuthToken } from "../api/client";
 import { registerForPushNotifications } from "../lib/pushNotifications";
 
 export type Role = "ADMIN" | "MANAGER" | "MECHANIC" | "DRIVER";
@@ -13,6 +13,9 @@ const TOKEN_KEY = "heos.authToken";
 type AuthContextValue = {
   user: CurrentUser | null;
   loading: boolean;
+  /** A saved session exists but couldn't be checked (offline, timeout, server down). */
+  restoreFailed: boolean;
+  retryRestore: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   signupOrganization: (organizationName: string, name: string, email: string, password: string) => Promise<void>;
   acceptInvite: (code: string, name: string, email: string, password: string) => Promise<void>;
@@ -29,22 +32,42 @@ async function afterAuth(res: AuthResponse) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [restoreFailed, setRestoreFailed] = useState(false);
 
   useEffect(() => {
     (async () => {
       const token = await AsyncStorage.getItem(TOKEN_KEY);
       if (token) {
         setAuthToken(token);
-        try {
-          setUser(await apiGet<CurrentUser>("/auth/me"));
-        } catch {
-          await AsyncStorage.removeItem(TOKEN_KEY);
-          setAuthToken(null);
-        }
+        await restoreSession();
       }
       setLoading(false);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Only a definite "this token is no good" (401/403) signs the user out. No signal, a timeout or
+  // a server hiccup on launch used to wipe the saved session too, forcing a mechanic out in the
+  // yard to log in again; now those leave the token in place and show a retry instead.
+  async function restoreSession() {
+    setRestoreFailed(false);
+    try {
+      setUser(await apiGet<CurrentUser>("/auth/me"));
+    } catch (err) {
+      if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+        await AsyncStorage.removeItem(TOKEN_KEY);
+        setAuthToken(null);
+      } else {
+        setRestoreFailed(true);
+      }
+    }
+  }
+
+  async function retryRestore() {
+    setLoading(true);
+    await restoreSession();
+    setLoading(false);
+  }
 
   // Registers this device's push token whenever a user becomes signed in — covers login,
   // signup, invite-accept, and a restored session on app launch, all in one place. Depends on
@@ -84,9 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.removeItem(TOKEN_KEY);
     setAuthToken(null);
     setUser(null);
+    setRestoreFailed(false);
   }
 
-  return <AuthContext.Provider value={{ user, loading, login, signupOrganization, acceptInvite, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, restoreFailed, retryRestore, login, signupOrganization, acceptInvite, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

@@ -8,6 +8,18 @@ export function setAuthToken(token: string | null) {
   authToken = token;
 }
 
+// Thrown for any response the server actually sent back with an error status, so callers can
+// tell "the server said no" (status set) apart from "never reached the server" (a plain fetch
+// TypeError), which matters for deciding whether a saved session is really invalid.
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 async function extractErrorMessage(res: Response) {
   try {
     const body = await res.json();
@@ -21,33 +33,24 @@ function authHeaders(): Record<string, string> {
   return authToken ? { authorization: `Bearer ${authToken}` } : {};
 }
 
+async function request(path: string, init: RequestInit): Promise<Response> {
+  const res = await fetch(`${API_BASE_URL}${path}`, { ...init, headers: { ...init.headers, ...authHeaders() } });
+  if (!res.ok) throw new ApiError(await extractErrorMessage(res), res.status);
+  return res;
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, { headers: authHeaders() });
-  if (!res.ok) throw new Error(await extractErrorMessage(res));
-  return res.json();
+  return (await request(path, {})).json();
 }
 
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
-    headers: { "content-type": "application/json", ...authHeaders() },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(await extractErrorMessage(res));
-  return res.json();
+  return (await request(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json();
 }
 
 export async function apiPatch<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    method: "PATCH",
-    headers: { "content-type": "application/json", ...authHeaders() },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(await extractErrorMessage(res));
-  return res.json();
+  return (await request(path, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).json();
 }
 
 export async function apiDelete(path: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${path}`, { method: "DELETE", headers: authHeaders() });
-  if (!res.ok) throw new Error(await extractErrorMessage(res));
+  await request(path, { method: "DELETE" });
 }
