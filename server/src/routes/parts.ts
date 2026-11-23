@@ -8,7 +8,11 @@ import { assertMachineInOrg } from "../lib/machineContext";
 export const partsRouter = Router();
 partsRouter.use(requireAuth);
 
-const receiptImageSchema = z.string().startsWith("data:image/");
+// About 5MB of image once decoded from base64, comfortably above a full-resolution phone photo
+// at the app's 0.5 JPEG quality, while still fitting inside the 10mb body limit for /parts.
+const MAX_RECEIPT_CHARS = 7_000_000;
+const MAX_RECEIPTS_PER_REQUEST = 10;
+const receiptImageSchema = z.string().startsWith("data:image/").max(MAX_RECEIPT_CHARS, "receipt image is too large");
 
 const createSchema = z.object({
   machineId: z.string(),
@@ -18,7 +22,7 @@ const createSchema = z.object({
   costCents: z.number().int().nonnegative().default(0),
   // Data URLs ("data:image/jpeg;base64,...") from the app's camera/photo-library picker — a
   // part can be created with receipts already attached instead of adding them one at a time.
-  receiptImages: z.array(receiptImageSchema).optional(),
+  receiptImages: z.array(receiptImageSchema).max(MAX_RECEIPTS_PER_REQUEST).optional(),
 });
 
 // Ordering/correcting parts is mechanic-and-up work, same tier as repair logs.

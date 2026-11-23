@@ -21,8 +21,12 @@ const app = express();
 // X-Forwarded-For — rate limiting would otherwise see every request as coming from the proxy.
 app.set("trust proxy", 1);
 app.use(cors());
-// Default 100kb is too small for a receipt photo posted as a base64 data URL.
-app.use(express.json({ limit: "10mb" }));
+// Receipt photos and voice clips arrive as base64 data URLs, too big for the default 100kb, so
+// only those two routes get a larger limit. Everything else, including the unauthenticated
+// /auth routes, keeps the default. These must be mounted before the general parser below: a
+// body already parsed here is skipped there, instead of being rejected at 100kb.
+app.use(["/parts", "/transcribe"], express.json({ limit: "10mb" }));
+app.use(express.json());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
@@ -43,6 +47,10 @@ app.use("/transcribe", transcribeRouter);
 // Catches errors from any route (including async ones, via express-async-errors) so a bad
 // request returns a 500 instead of crashing the whole server for every other user.
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  // Client errors raised by express itself (an oversized body is 413, malformed JSON is 400)
+  // carry their own status and are safe to show; anything else is a real server failure.
+  const status = typeof err === "object" && err !== null && "status" in err ? Number(err.status) : 500;
+  if (status >= 400 && status < 500) return res.status(status).json({ error: status === 413 ? "request too large" : "invalid request body" });
   console.error(err);
   res.status(500).json({ error: "internal server error" });
 });
