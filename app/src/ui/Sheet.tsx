@@ -1,13 +1,18 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "./Text";
 import { neutral } from "../theme/palette";
 import { hexToRgba } from "../theme/color";
 
+// Fraction of the window left above the panel, showing the dimmed screen behind it.
+const TOP_GAP = 0.15;
+
 const styles = StyleSheet.create({
-  sheet: { height: "85%" },
+  container: { flex: 1, justifyContent: "flex-end" },
+  fill: { flex: 1 },
+  sheet: { flex: 1 },
   // Animated.View doesn't reliably take NativeWind's className (see Accordion.tsx — its animated
   // layers are all raw style too), so this is bg-black/40's equivalent as a literal style.
   backdrop: { backgroundColor: hexToRgba("#000000", 0.4) },
@@ -58,11 +63,16 @@ export function Sheet({ visible, title, onClose, children }: { visible: boolean;
 
   return (
     <Modal visible transparent animationType="none" onRequestClose={onClose}>
-      <View className="flex-1 justify-end">
+      {/* The panel is pinned 15% below the top and fills the rest. While the keyboard is open,
+          KeyboardAvoidingView pads the bottom by its height, so the panel shortens and its content
+          (the chat composer, a form's fields) stays above the keyboard instead of under it. This
+          view fills the Modal from the window's origin, which is what KeyboardAvoidingView's
+          parent-relative measurement needs to be right, so no offset is required. */}
+      <KeyboardAvoidingView behavior="padding" style={[styles.container, { paddingTop: windowHeight * TOP_GAP }]}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdropStyle]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" />
         </Animated.View>
-        <Animated.View style={panelStyle}>
+        <Animated.View style={[styles.fill, panelStyle]}>
           <Pressable className="rounded-t-card bg-white p-4 pb-8 dark:bg-neutral-900" style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View className="mb-3 flex-row items-center justify-between">
               <Text variant="heading">{title}</Text>
@@ -73,7 +83,7 @@ export function Sheet({ visible, title, onClose, children }: { visible: boolean;
             {mounted ? <View className="flex-1">{children}</View> : null}
           </Pressable>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

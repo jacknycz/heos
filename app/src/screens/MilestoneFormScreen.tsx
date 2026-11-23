@@ -81,7 +81,7 @@ export function MilestoneFormScreen({ route, navigation }: Props) {
   }
 
   return (
-    <Screen edges={["bottom"]}>
+    <Screen edges={["bottom"]} scroll>
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
       <FormField control={control} name="label" label="What needs to happen?" placeholder="e.g. Fluids check" />
       <SelectField control={control} name="type" label="Type" options={MILESTONE_TYPE_OPTIONS} />

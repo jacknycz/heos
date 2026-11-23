@@ -30,7 +30,7 @@ export function LocationFormScreen({ route, navigation }: Props) {
   }
 
   return (
-    <Screen edges={["bottom"]}>
+    <Screen edges={["bottom"]} scroll>
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
       <FormField control={control} name="name" label="Name" placeholder="e.g. Main Yard" />
       <FormField control={control} name="address" label="Address (optional)" multiline numberOfLines={2} />

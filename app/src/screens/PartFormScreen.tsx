@@ -83,7 +83,7 @@ export function PartFormScreen({ route, navigation }: Props) {
   }
 
   return (
-    <Screen edges={["bottom"]}>
+    <Screen edges={["bottom"]} scroll>
       {formState.errors.root ? <Text className="text-danger-600">{formState.errors.root.message}</Text> : null}
       <FormField control={control} name="partNumber" label="Part number" placeholder="e.g. AF-2210" />
       <FormField control={control} name="description" label="Description (optional)" />

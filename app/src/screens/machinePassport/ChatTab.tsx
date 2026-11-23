@@ -102,6 +102,9 @@ export function ChatTab({ machineId, onSummarySaved }: { machineId: string; onSu
         contentContainerClassName="gap-3"
         keyboardShouldPersistTaps="handled"
         onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        // The list shrinks when the keyboard opens (the Sheet makes room for it), so this keeps
+        // the latest messages in view instead of leaving them hidden below the new bottom edge.
+        onLayout={() => scrollRef.current?.scrollToEnd({ animated: false })}
       >
         {messages.length === 0 ? (
           <EmptyState title="Ask about this machine" subtitle="Its full history is already loaded into context." />
