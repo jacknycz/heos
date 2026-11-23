@@ -148,10 +148,17 @@ export function Accordion({
   );
 
   // The body is always mounted so its height can animate from 0 to the measured content height;
-  // overflow is clipped by the Animated wrapper's height.
+  // overflow is clipped by the Animated wrapper's height. The measured view is positioned
+  // absolute (full width, top-anchored) rather than laid out in the normal flow: on the New
+  // Architecture, Yoga treats the Animated wrapper's collapsed height as a real constraint on its
+  // children too, so a normal-flow child's onLayout gets stuck reporting 0 while collapsed —
+  // absolute positioning takes it out of that flex sizing and lets it measure its own content.
   const body = (
     <Animated.View style={[{ overflow: "hidden" }, bodyStyle]}>
-      <View style={styles.body} onLayout={(e) => (contentHeight.value = e.nativeEvent.layout.height)}>
+      <View
+        style={[styles.body, { position: "absolute", top: 0, left: 0, right: 0 }]}
+        onLayout={(e) => (contentHeight.value = e.nativeEvent.layout.height)}
+      >
         {children}
       </View>
     </Animated.View>
