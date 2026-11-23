@@ -121,14 +121,18 @@ export function MachinePassportScreen({ route, navigation }: Props) {
     }, [refetch]),
   );
 
-  // The navigator's static options set the header's back button and fallback title; this fills
-  // in the real machine name + subtitle once the passport loads, without touching headerLeft.
+  // The navigator's static options set the header's back button and a plain-string fallback
+  // title; this swaps in the two-line custom title from the very first layout, not only once the
+  // passport loads. Setting it unconditionally (rather than only after data arrives) keeps the
+  // native header's rendered height constant from the first paint — swapping a single-line title
+  // for this taller two-line one after mount left the header visually taller than the safe-area
+  // inset the content below was still sized against, so content rendered starting underneath
+  // where the shorter header used to end, clipped by the now-taller one actually drawn on top.
   useLayoutEffect(() => {
-    if (!passport) return;
-    const subtitle = [passport.make, passport.model, passport.year].filter(Boolean).join(" ");
+    const subtitle = passport ? [passport.make, passport.model, passport.year].filter(Boolean).join(" ") : "";
     navigation.setOptions({
-      title: passport.name,
-      headerTitle: () => <PassportHeaderTitle name={passport.name} subtitle={subtitle} />,
+      title: passport?.name ?? "Loading…",
+      headerTitle: () => <PassportHeaderTitle name={passport?.name ?? "Loading…"} subtitle={subtitle} />,
     });
   }, [navigation, passport]);
 
