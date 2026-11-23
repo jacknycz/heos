@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { and, eq, gt, isNull, sql, TransactionRollbackError } from "drizzle-orm";
 import { db, schema } from "../db";
 import { hashPassword, verifyPassword, signAuthToken, requireAuth } from "../lib/auth";
 
@@ -69,28 +69,48 @@ authRouter.post("/accept-invite", async (req, res) => {
   const parsed = schemaValidator.safeParse(req.body);
   if (!parsed.success) return res.status(400).json(parsed.error.flatten());
 
-  const [invite] = await db.select().from(schema.orgInvites).where(eq(schema.orgInvites.code, parsed.data.code));
-  if (!invite) return res.status(404).json({ error: "invite not found" });
-  if (invite.usedAt) return res.status(410).json({ error: "invite already used" });
-  if (invite.expiresAt.getTime() < Date.now()) return res.status(410).json({ error: "invite expired" });
+  // Codes are shown uppercase; accept them however they're typed (and tolerate spaces/dashes).
+  // Comparing on upper(code) also keeps older lowercase-hex codes redeemable until they expire.
+  const code = parsed.data.code.replace(/[\s-]/g, "").toUpperCase();
+  const passwordHash = await hashPassword(parsed.data.password);
 
-  const [existing] = await db.select().from(schema.users).where(eq(schema.users.email, parsed.data.email));
-  if (existing) return res.status(409).json({ error: "email already in use" });
+  const result = await db
+    .transaction(async (tx) => {
+      // Claim the invite atomically: only one request can flip used_at from null, so two
+      // concurrent redemptions of the same code can't both create an account.
+      const [invite] = await tx
+        .update(schema.orgInvites)
+        .set({ usedAt: new Date() })
+        .where(and(sql`upper(${schema.orgInvites.code}) = ${code}`, isNull(schema.orgInvites.usedAt), gt(schema.orgInvites.expiresAt, new Date())))
+        .returning();
+      if (!invite) return { error: "invalid" as const };
 
-  const [user] = await db
-    .insert(schema.users)
-    .values({
-      organizationId: invite.organizationId,
-      name: parsed.data.name,
-      email: parsed.data.email,
-      passwordHash: await hashPassword(parsed.data.password),
-      role: invite.role,
+      const [existing] = await tx.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.email, parsed.data.email));
+      if (existing) {
+        tx.rollback();
+      }
+
+      const [user] = await tx
+        .insert(schema.users)
+        .values({ organizationId: invite.organizationId, name: parsed.data.name, email: parsed.data.email, passwordHash, role: invite.role })
+        .returning();
+      await tx.update(schema.orgInvites).set({ usedByUserId: user.id }).where(eq(schema.orgInvites.id, invite.id));
+      return { user };
     })
-    .returning();
+    .catch((err: unknown) => {
+      if (err instanceof TransactionRollbackError) return { error: "email" as const };
+      throw err;
+    });
 
-  await db.update(schema.orgInvites).set({ usedAt: new Date(), usedByUserId: user.id }).where(eq(schema.orgInvites.id, invite.id));
+  // One response for unknown, used and expired codes alike, so the endpoint can't be used to
+  // confirm which codes exist.
+  if ("error" in result) {
+    return result.error === "invalid"
+      ? res.status(404).json({ error: "invalid or expired invite code" })
+      : res.status(409).json({ error: "email already in use" });
+  }
 
-  res.status(201).json({ token: signAuthToken({ id: user.id }), user: userResponse(user) });
+  res.status(201).json({ token: signAuthToken({ id: result.user.id }), user: userResponse(result.user) });
 });
 
 authRouter.get("/me", requireAuth, async (req, res) => {

@@ -10,6 +10,15 @@ usersRouter.use(requireAuth);
 
 const ROLES = ["ADMIN", "MANAGER", "MECHANIC", "DRIVER"] as const;
 
+// Crockford base32 (no I/L/O/U, so nothing reads ambiguously when typed off someone's screen).
+// 12 characters = 60 bits: short enough to type, and with /auth/accept-invite rate-limited,
+// far beyond brute-forcing within a code's 7-day life. 32 divides 256 evenly, so masking a
+// random byte to 5 bits picks each character without bias.
+const INVITE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+function generateInviteCode() {
+  return Array.from(randomBytes(12), (b) => INVITE_ALPHABET[b & 31]).join("");
+}
+
 // Teammates in the current user's organization.
 usersRouter.get("/", async (req, res) => {
   const rows = await db
@@ -62,7 +71,7 @@ usersRouter.post("/invites", requireAdmin, async (req, res) => {
     .insert(schema.orgInvites)
     .values({
       organizationId: req.user!.organizationId,
-      code: randomBytes(4).toString("hex"),
+      code: generateInviteCode(),
       role: parsed.data.role,
       createdByUserId: req.user!.id,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
