@@ -65,6 +65,7 @@ export function TeamScreen() {
   return (
     <Screen edges={["bottom"]} padded={false}>
       <FlatList
+        className="flex-1"
         contentContainerClassName="gap-3 p-4"
         data={members}
         keyExtractor={(m) => m.id}

@@ -71,6 +71,7 @@ export function MachineListScreen({ navigation }: Props) {
         <Dropdown label="Location" placeholder="All locations" value={locationFilter} onChange={setLocationFilter} options={locationOptions} />
       </View>
       <FlatList
+        className="flex-1"
         data={filteredMachines}
         keyExtractor={(m) => m.id}
         ItemSeparatorComponent={() => <View className="h-px bg-neutral-200" />}

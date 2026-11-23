@@ -53,6 +53,7 @@ export function LocationsScreen({ navigation }: Props) {
   return (
     <Screen edges={["bottom"]} padded={false}>
       <FlatList
+        className="flex-1"
         contentContainerClassName="gap-3 p-4"
         data={locations}
         keyExtractor={(l) => l.id}
