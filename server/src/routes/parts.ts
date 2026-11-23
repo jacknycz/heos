@@ -143,3 +143,23 @@ partsRouter.get("/repeat-orders", async (req, res) => {
   const repeats = [...counts.entries()].filter(([, count]) => count > 1).map(([partNumber, count]) => ({ partNumber, count }));
   res.json(repeats);
 });
+
+// Fleet-wide order fulfillment for the dashboard: every part still awaiting delivery (oldest
+// first, with its machine so a row can link to the passport) plus how many have been received.
+partsRouter.get("/order-status", async (req, res) => {
+  const rows = await db
+    .select({
+      id: schema.parts.id,
+      partNumber: schema.parts.partNumber,
+      orderedAt: schema.parts.orderedAt,
+      receivedAt: schema.parts.receivedAt,
+      machineId: schema.machines.id,
+      machineName: schema.machines.name,
+    })
+    .from(schema.parts)
+    .innerJoin(schema.machines, eq(schema.machines.id, schema.parts.machineId))
+    .where(eq(schema.machines.organizationId, req.user!.organizationId))
+    .orderBy(asc(schema.parts.orderedAt));
+  const awaiting = rows.filter((r) => !r.receivedAt).map(({ receivedAt: _receivedAt, ...r }) => r);
+  res.json({ awaiting, receivedCount: rows.length - awaiting.length });
+});

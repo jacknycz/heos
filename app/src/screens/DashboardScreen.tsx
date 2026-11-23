@@ -12,6 +12,10 @@ import { danger, neutral, primary, warning, white } from "../theme/palette";
 import { shadows } from "../theme/shadows";
 
 type RepeatOrder = { partNumber: string; count: number };
+type OrderStatus = {
+  awaiting: { id: string; partNumber: string; orderedAt: string; machineId: string; machineName: string }[];
+  receivedCount: number;
+};
 type Machine = {
   id: string;
   name: string;
@@ -95,10 +99,11 @@ function AlertMachineRows({
   );
 }
 
-// Mobile manager dashboard — fleet status + repeat-order flags (Phase 1). Web version is Phase 3.
+// Mobile manager dashboard — fleet status, order fulfillment + repeat-order flags (Phase 1). Web version is Phase 3.
 export function DashboardScreen({ navigation }: Props) {
   const [repeatOrders, setRepeatOrders] = useState<RepeatOrder[]>([]);
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>({ awaiting: [], receivedCount: 0 });
   const [dueExpanded, setDueExpanded] = useState(false);
   const [upcomingExpanded, setUpcomingExpanded] = useState(false);
   // Only the very first load shows a full-screen spinner — refocusing (e.g. back from a passport
@@ -106,14 +111,16 @@ export function DashboardScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const { height } = useWindowDimensions();
-  const openMilestones = (m: Machine) => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id }, initial: false });
+  const openPassport = (machineId: string) => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId }, initial: false });
+  const openMilestones = (m: Machine) => openPassport(m.id);
 
   const fetchAll = useCallback(() => {
     setError(false);
-    Promise.all([apiGet<RepeatOrder[]>("/parts/repeat-orders"), apiGet<Machine[]>("/machines")])
-      .then(([repeatOrderRows, machineRows]) => {
+    Promise.all([apiGet<RepeatOrder[]>("/parts/repeat-orders"), apiGet<Machine[]>("/machines"), apiGet<OrderStatus>("/parts/order-status")])
+      .then(([repeatOrderRows, machineRows, orderStatusRow]) => {
         setRepeatOrders(repeatOrderRows);
         setMachines(machineRows);
+        setOrderStatus(orderStatusRow);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
@@ -213,10 +220,7 @@ export function DashboardScreen({ navigation }: Props) {
             ) : (
               <View className="gap-2">
                 {recentMachines.map((m) => (
-                  <Pressable
-                    key={m.id}
-                    onPress={() => navigation.navigate("Machines", { screen: "MachinePassport", params: { machineId: m.id }, initial: false })}
-                  >
+                  <Pressable key={m.id} onPress={() => openPassport(m.id)}>
                     <Card className="flex-row items-center justify-between">
                       <View>
                         <Text variant="heading">{m.name}</Text>
@@ -225,6 +229,39 @@ export function DashboardScreen({ navigation }: Props) {
                       <Text variant="muted">{new Date(m.lastActivityAt).toLocaleDateString()}</Text>
                     </Card>
                   </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View className="gap-3">
+            <View className="flex-row items-center justify-between">
+              <Text variant="section">Orders</Text>
+              <Text variant="muted">
+                {orderStatus.awaiting.length} awaiting · {orderStatus.receivedCount} received
+              </Text>
+            </View>
+            {orderStatus.awaiting.length === 0 ? (
+              <EmptyState title="Nothing awaiting delivery" />
+            ) : (
+              // Same row recipe as "Repeat orders flagged" below.
+              <View className="overflow-hidden rounded-card bg-white dark:bg-neutral-900" style={shadows.subtle}>
+                {orderStatus.awaiting.map((o, i) => (
+                  <View key={o.id}>
+                    {i > 0 ? <View className="h-px bg-neutral-200 dark:bg-neutral-800" /> : null}
+                    <Pressable onPress={() => openPassport(o.machineId)} className="flex-row items-center gap-3 p-4 active:opacity-60">
+                      <View className="size-10 items-center justify-center rounded-2xl bg-warning-100 dark:bg-warning-900">
+                        <Ionicons name="cube-outline" size={18} color={warning[600]} />
+                      </View>
+                      <View className="flex-1">
+                        <Text variant="heading">{o.partNumber}</Text>
+                        <Text variant="muted">
+                          {o.machineName} · ordered {new Date(o.orderedAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                      <Badge tone="warning" label="Ordered" />
+                    </Pressable>
+                  </View>
                 ))}
               </View>
             )}
